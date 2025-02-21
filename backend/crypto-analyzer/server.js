@@ -10,9 +10,6 @@ app.use(express.json());
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 
-const cryptoRoutes = require('./routes/cryptoRoutes');
-app.use('/api', cryptoRoutes);
-
 // Conectar ao MongoDB
 mongoose.connect(MONGO_URI, {
     useNewUrlParser: true,
@@ -25,3 +22,9 @@ app.get('/', (req, res) => {
 });
 
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+
+const cryptoRoutes = require('./routes/cryptoRoutes.js');
+app.use('/api/crypto', cryptoRoutes);
+
+const mexcRoutes = require('./routes/mexcRoutes');
+app.use('/api/mexc', mexcRoutes);
