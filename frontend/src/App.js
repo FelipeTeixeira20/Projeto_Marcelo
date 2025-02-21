@@ -1,23 +1,23 @@
 import React, { useEffect, useState } from "react";
 import io from "socket.io-client";
+import axios from "axios";
 
-const socket = io("http://localhost:5000"); // Conectar ao backend
+const socket = io("http://localhost:5000");
 
 function App() {
     const [prices, setPrices] = useState({});
 
     useEffect(() => {
-        // Escutar os dados do WebSocket (atualização em tempo real)
         socket.on("cryptoPrices", (data) => {
-            console.log("📊 Dados recebidos do WebSocket:", data.slice(0, 5)); // Exibir as 5 primeiras moedas no console
+            console.log("📊 Dados recebidos do WebSocket:", data.slice(0, 5));
 
             setPrices((prevPrices) => {
                 const updatedPrices = { ...prevPrices };
 
                 data.forEach((crypto) => {
                     updatedPrices[crypto.symbol] = {
-                        price: crypto.price, // Atualiza corretamente o preço
-                        volume: crypto.volume, // Atualiza corretamente o volume
+                        price: !isNaN(crypto.price) ? parseFloat(crypto.price) : 0, 
+                        volume: !isNaN(crypto.volume) ? parseFloat(crypto.volume) : 0,
                     };
                 });
 

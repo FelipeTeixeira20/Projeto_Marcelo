@@ -28,28 +28,38 @@ mongoose.connect(MONGO_URI)
 const MEXC_API_URL = "https://api.mexc.com/api/v3/ticker/price";
 
 // Função para obter preços em tempo real e enviar para o frontend via WebSockets
+let lastPrices = {}; // Armazena os últimos preços enviados
+
 const fetchCryptoPrices = async () => {
     try {
-        const response = await axios.get("https://api.mexc.com/api/v3/ticker/price");
+        const response = await axios.get("https://api.mexc.com/api/v3/ticker/24hr");
 
         if (response.data) {
             const formattedData = response.data.map(crypto => ({
                 symbol: crypto.symbol,
-                price: parseFloat(crypto.price),
-                volume: Math.random() * 1000, // Simulando volume (substitua por volume real se disponível)
+                price: parseFloat(crypto.lastPrice) || 0, // Converte para número ou define como 0
+                volume: parseFloat(crypto.volume) || 0, // Converte para número ou define como 0
             }));
 
-            io.emit("cryptoPrices", formattedData); // Enviando para o frontend via WebSocket
+            // Verificar se os valores mudaram antes de enviar para o frontend
+            const hasChanges = formattedData.some(crypto => {
+                const lastPrice = lastPrices[crypto.symbol]?.price;
+                return lastPrice !== crypto.price;
+            });
+
+            if (hasChanges) {
+                console.log("🔄 Enviando preços atualizados para o frontend:", formattedData.slice(0, 5));
+                io.emit("cryptoPrices", formattedData); // Enviar apenas se houver mudanças
+                lastPrices = Object.fromEntries(formattedData.map(crypto => [crypto.symbol, crypto])); // Atualiza os últimos preços armazenados
+            }
         }
     } catch (error) {
         console.error("Erro ao buscar preços da MEXC:", error);
     }
 };
 
-// Atualizar os preços e volumes a cada 1 segundo
-setInterval(fetchCryptoPrices, 1000);
-
-
+// Atualizar os preços e volumes a cada 2 segundos
+setInterval(fetchCryptoPrices, 2000);
 
 io.on("connection", (socket) => {
     console.log("🟢 Novo cliente conectado:", socket.id);
