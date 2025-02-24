@@ -28,10 +28,14 @@
     color: white;
     font-size: 24px;
     cursor: pointer;
-    transition: transform 0.3s ease-in-out;
+    transition: transform 0.3s ease-in-out; /* Adiciona animação */
     position: absolute;
     top: 15px;
     left: 15px;
+}
+
+.sidebar.open .toggle-btn {
+    transform: rotate(180deg); /* Faz o botão girar suavemente */
 }
 
 /* Menu */
