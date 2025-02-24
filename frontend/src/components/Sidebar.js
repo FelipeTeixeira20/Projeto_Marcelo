@@ -1,6 +1,8 @@
 import React from "react";
-import { FaBars, FaTimes, FaHome, FaChartBar, FaCog, FaSignOutAlt } from "react-icons/fa";
-import { useSidebar } from "../context/SidebarContext"; // Importando o contexto
+import { Link } from "react-router-dom"; // ✅ Importando Link para navegação correta
+import { FaBars, FaTimes, FaHome, FaCog, FaSignOutAlt, FaStar, FaUser } from "react-icons/fa";
+import { MdShowChart } from "react-icons/md"; // Ícone correto para gráficos
+import { useSidebar } from "../context/SidebarContext";
 import "./Sidebar.css";
 
 const Sidebar = () => {
@@ -17,22 +19,35 @@ const Sidebar = () => {
             </button>
 
             <div className="menu">
-                <a href="/" className="menu-item">
+                <Link to="/" className="menu-item">
                     <FaHome className="menu-icon" />
                     <span className="menu-text">Dashboard</span>
-                </a>
-                <a href="/analytics" className="menu-item">
-                    <FaChartBar className="menu-icon" />
-                    <span className="menu-text">Analytics</span>
-                </a>
-                <a href="/settings" className="menu-item">
+                </Link>
+
+                <Link to="/market-analysis" className="menu-item">
+                    <MdShowChart className="menu-icon" />
+                    <span className="menu-text">Análise de Mercado</span>
+                </Link>
+
+                <Link to="/favorites" className="menu-item">
+                    <FaStar className="menu-icon" />
+                    <span className="menu-text">Favoritos</span>
+                </Link>
+
+                <Link to="/profile" className="menu-item">
+                    <FaUser className="menu-icon" />
+                    <span className="menu-text">Perfil</span>
+                </Link>
+
+                <Link to="/settings" className="menu-item">
                     <FaCog className="menu-icon" />
-                    <span className="menu-text">Settings</span>
-                </a>
-                <a href="/logout" className="menu-item logout">
+                    <span className="menu-text">Configurações</span>
+                </Link>
+
+                <Link to="/logout" className="menu-item logout">
                     <FaSignOutAlt className="menu-icon" />
                     <span className="menu-text">Logout</span>
-                </a>
+                </Link>
             </div>
         </div>
     );

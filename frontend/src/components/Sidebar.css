@@ -13,10 +13,11 @@
     transition: width 0.3s ease-in-out;
     overflow: hidden;
     z-index: 99;
+    white-space: nowrap; /* ✅ Evita que o texto quebre */
 }
 
 .sidebar.open {
-    width: 200px;
+    width: 230px;
     align-items: flex-start;
     padding-left: 10px;
 }
@@ -57,14 +58,13 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px 0;
+    padding: 12px 15px; /* ✅ Maior espaçamento interno */
     color: white;
     text-decoration: none;
     font-size: 18px;
     width: 100%;
     transition: background 0.3s;
-    justify-content: flex-start; /* Centralizado quando fechado */
-    padding-left: 22px;
+    justify-content: flex-start;
 }
 
 .sidebar.open .menu-item {
@@ -92,7 +92,10 @@
 
 .menu-text {
     opacity: 1;
-    transition: opacity 0.2s ease-in-out;
+    transition: opacity 0.3s ease-in-out;
+    max-width: 100%; /* ✅ Garante que não corte o texto */
+    overflow: hidden;
+    text-overflow: ellipsis; /* ✅ Se necessário, adiciona "..." no final */
 }
 
 .sidebar:not(.open) .menu-text {

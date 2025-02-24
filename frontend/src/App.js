@@ -4,7 +4,9 @@ import { AnimatePresence } from "framer-motion";
 import { SidebarProvider } from "./context/SidebarContext";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
-import Analytics from "./pages/Analytics";
+import Favorites from "./pages/Favorites";
+import MarketAnalysis from "./pages/MarketAnalysis";
+import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import PageTransition from "./components/PageTransition";
 
@@ -16,7 +18,9 @@ function AnimatedRoutes() {
             <PageTransition key={location.pathname}>
                 <Routes location={location} key={location.pathname}>
                     <Route path="/" element={<Dashboard />} />
-                    <Route path="/analytics" element={<Analytics />} />
+                    <Route path="/market-analysis" element={<MarketAnalysis />} />
+                    <Route path="/favorites" element={<Favorites />} />
+                    <Route path="/profile" element={<Profile />} />
                     <Route path="/settings" element={<Settings />} />
                 </Routes>
             </PageTransition>
