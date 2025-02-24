@@ -1,0 +1,108 @@
+.sidebar {
+    width: 60px;
+    height: calc(100vh - 70px);
+    background: linear-gradient(90deg, #2a004f, #0d0d1a);
+    color: white;
+    position: fixed;
+    top: 70px;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 20px;
+    transition: width 0.3s ease-in-out;
+    overflow: hidden;
+    z-index: 99;
+}
+
+.sidebar.open {
+    width: 200px;
+    align-items: flex-start;
+    padding-left: 10px;
+}
+
+/* Botão de abrir e fechar */
+.toggle-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    transition: transform 0.3s ease-in-out;
+    position: absolute;
+    top: 15px;
+    left: 15px;
+}
+
+/* Menu */
+.menu {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-top: 60px;
+    align-items: center;
+}
+
+.sidebar.open .menu {
+    align-items: flex-start;
+    padding-left: 5px;
+}
+
+/* Estilo dos itens do menu */
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    color: white;
+    text-decoration: none;
+    font-size: 18px;
+    width: 100%;
+    transition: background 0.3s;
+    justify-content: flex-start; /* Centralizado quando fechado */
+    padding-left: 22px;
+}
+
+.sidebar.open .menu-item {
+    justify-content: flex-start;
+    padding-left: 10px; /* Ajuste fino para alinhar os ícones */
+}
+
+.sidebar.open .menu-icon {
+    min-width: 25px; /* Ajuste fino */
+    margin-left: -5px; /* Traz mais para a esquerda */
+    text-align: left;
+}
+
+.menu-item:hover {
+    background: linear-gradient(90deg, #6b01c9, #28282c);
+}
+
+.menu-icon {
+    font-size: 22px;
+    min-width: 40px;
+    text-align: center;
+    transition: transform 0.3s ease-in-out;
+}
+
+
+.menu-text {
+    opacity: 1;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.sidebar:not(.open) .menu-text {
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+
+/* Quando a sidebar abre, o texto aparece */
+.sidebar.open .menu-text {
+    display: inline;
+}
+
+/* Logout vermelho */
+.logout {
+    color: red;
+}
