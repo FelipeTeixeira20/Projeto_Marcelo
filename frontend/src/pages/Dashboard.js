@@ -16,7 +16,7 @@ const exchanges = [
 const Dashboard = () => {
     const [prices, setPrices] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [selectedExchanges, setSelectedExchanges] = useState(exchanges.map(e => e.name)); // Todas ativadas por padrão
+    const [selectedExchanges, setSelectedExchanges] = useState(exchanges.map(e => e.name));
 
     useEffect(() => {
         const fetchData = async () => {
@@ -31,7 +31,6 @@ const Dashboard = () => {
         fetchData();
     }, []);
 
-    // Alternar seleção de exchanges
     const toggleExchange = (exchange) => {
         setSelectedExchanges(prev =>
             prev.includes(exchange) ? prev.filter(e => e !== exchange) : [...prev, exchange]
@@ -41,10 +40,22 @@ const Dashboard = () => {
     return (
         <Layout>
             <div className="dashboard-container">
+                {/* Fundo animado com linhas flutuantes */}
+                <div className="animated-background">
+                    <div className="animated-lines">
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                    </div>
+                </div>
+                
                 <h2>Dashboard</h2>
                 <p>Acompanhe os preços das principais criptomoedas em tempo real.</p>
 
-                {/* 🔹 Novo Filtro de Exchanges 🔹 */}
                 <div className="exchange-box">
                     <h3>Selecione suas exchanges favoritas</h3>
                     <div className="exchange-filter">
