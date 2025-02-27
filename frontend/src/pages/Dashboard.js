@@ -1,110 +1,108 @@
 import React, { useState, useEffect } from "react";
 import Layout from "../components/Layout";
 import axios from "axios";
-import { Line } from "react-chartjs-2";
-import "chart.js/auto";
+import { FaStar } from "react-icons/fa";
 import "./Dashboard.css";
 
-const exchanges = [
-    { name: "Binance", color: "#F3BA2F" },
-    { name: "Bitget", color: "#00FF7F" },
-    { name: "Gate.io", color: "#00AA00" },
-    { name: "KuCoin", color: "#0052FF" },
-    { name: "MEXC", color: "#FF0000" },
-];
-
 const Dashboard = () => {
-    const [prices, setPrices] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [selectedExchanges, setSelectedExchanges] = useState(exchanges.map(e => e.name));
+    const [cryptos, setCryptos] = useState([]);
+    const [favorites, setFavorites] = useState([]);
+    const [searchTerm, setSearchTerm] = useState(""); // 🔍 Estado para busca
+    const [sortOption, setSortOption] = useState(""); // 🔽 Estado para filtro
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await axios.get("https://api.mexc.com/api/v3/ticker/price");
-                setPrices(response.data);
-                setLoading(false);
+                const response = await axios.get("http://localhost:5000/api/mexc/prices");
+                setCryptos(response.data);
             } catch (error) {
-                console.error("Erro ao buscar dados: ", error);
+                console.error("Erro ao buscar dados da MEXC: ", error);
             }
         };
         fetchData();
     }, []);
 
-    const toggleExchange = (exchange) => {
-        setSelectedExchanges(prev =>
-            prev.includes(exchange) ? prev.filter(e => e !== exchange) : [...prev, exchange]
+    const toggleFavorite = (symbol) => {
+        setFavorites((prev) =>
+            prev.includes(symbol) ? prev.filter((fav) => fav !== symbol) : [...prev, symbol]
         );
     };
 
+    // 🔍 Filtra as moedas conforme o usuário digita
+    const filteredCryptos = cryptos.filter((crypto) =>
+        crypto.symbol.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    // 🔽 Ordenação das moedas conforme a opção escolhida
+    const sortedCryptos = [...filteredCryptos].sort((a, b) => {
+        if (sortOption === "price-asc") return parseFloat(a.price) - parseFloat(b.price);
+        if (sortOption === "price-desc") return parseFloat(b.price) - parseFloat(a.price);
+        if (sortOption === "alphabetical") return a.symbol.localeCompare(b.symbol);
+        return 0;
+    });
+
     return (
         <Layout>
+            <div className="animated-background">
+                <div className="animated-lines">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+            </div>
             <div className="dashboard-container">
-                {/* Fundo animado com linhas flutuantes */}
-                <div className="animated-background">
-                    <div className="animated-lines">
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                    </div>
-                </div>
-                
-                <h2>Dashboard</h2>
-                <p>Acompanhe os preços das principais criptomoedas em tempo real.</p>
+                <h2 className="dashboard-title">Mercado de Criptomoedas</h2>
+                <p className="dashboard-subtitle">Confira os preços atualizados das moedas na MEXC.</p>
 
-                <div className="exchange-box">
-                    <h3>Selecione suas exchanges favoritas</h3>
-                    <div className="exchange-filter">
-                        {exchanges.map((exchange, index) => (
-                            <button
-                                key={index}
-                                className={`exchange-button ${selectedExchanges.includes(exchange.name) ? "active" : ""}`}
-                                onClick={() => toggleExchange(exchange.name)}
-                                style={{
-                                    borderColor: selectedExchanges.includes(exchange.name) ? exchange.color : "transparent",
-                                    color: selectedExchanges.includes(exchange.name) ? "#fff" : "#aaa",
-                                }}
-                            >
-                                {exchange.name}
-                            </button>
-                        ))}
-                    </div>
+                {/* 🔍 Campo de busca + 🔽 Filtro */}
+                <div className="search-filter-container">
+                    <input
+                        type="text"
+                        placeholder="🔍 Buscar moeda..."
+                        className="search-input"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                    <select
+                        className="filter-select"
+                        value={sortOption}
+                        onChange={(e) => setSortOption(e.target.value)}
+                    >
+                        <option value="">Ordenar por...</option>
+                        <option value="price-asc">Preço: Menor → Maior</option>
+                        <option value="price-desc">Preço: Maior → Menor</option>
+                        <option value="alphabetical">Nome: A → Z</option>
+                    </select>
                 </div>
 
-                {loading ? (
-                    <p>Carregando dados...</p>
-                ) : (
-                    <>
-                        <div className="crypto-list">
-                            {prices.slice(0, 12).map((crypto, index) => (
-                                <div key={index} className="crypto-card">
+                {/* 🏦 Listagem das Criptomoedas */}
+                <div className="crypto-container">
+                    <div className="crypto-grid">
+                        {sortedCryptos.length > 0 ? (
+                            sortedCryptos.map((crypto, index) => (
+                                <div 
+                                    key={index} 
+                                    className={`crypto-card ${favorites.includes(crypto.symbol) ? "favorited" : ""}`}
+                                >
                                     <h3>{crypto.symbol}</h3>
                                     <p>${parseFloat(crypto.price).toFixed(4)}</p>
+                                    <button
+                                        className={`favorite-button ${favorites.includes(crypto.symbol) ? "favorited" : ""}`}
+                                        onClick={() => toggleFavorite(crypto.symbol)}
+                                    >
+                                        <FaStar />
+                                    </button>
                                 </div>
-                            ))}
-                        </div>
-                        <div className="chart-container">
-                            <Line
-                                data={{
-                                    labels: prices.slice(0, 10).map(crypto => crypto.symbol),
-                                    datasets: [
-                                        {
-                                            label: "Preço em USDT",
-                                            data: prices.slice(0, 10).map(crypto => parseFloat(crypto.price)),
-                                            borderColor: "#6b01c9",
-                                            backgroundColor: "rgba(107, 1, 201, 0.5)",
-                                            tension: 0.3,
-                                        },
-                                    ],
-                                }}
-                            />
-                        </div>
-                    </>
-                )}
+                            ))
+                        ) : (
+                            <p>Nenhuma moeda encontrada...</p>
+                        )}
+                    </div>
+                </div>
             </div>
         </Layout>
     );
