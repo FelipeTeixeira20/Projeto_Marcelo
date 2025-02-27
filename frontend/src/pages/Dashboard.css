@@ -194,7 +194,7 @@
     padding: 15px;
     border-radius: 12px;
     text-align: center;
-    transition: background 0.4s ease-in-out, border 0.4s ease-in-out, transform 0.3s ease-in-out;
+    transition: all 0.3s ease;
     border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
@@ -240,4 +240,28 @@
     .search-input, .filter-select {
         width: 100%;
     }
+}
+
+.crypto-card.up {
+    background-color: rgba(0, 255, 0, 0.1);
+    border-color: #00ff00;
+}
+
+.crypto-card.down {
+    background-color: rgba(255, 0, 0, 0.1);
+    border-color: #ff0000;
+}
+
+.price {
+    font-size: 1.2em;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.up .price {
+    color: #00aa00;
+}
+
+.down .price {
+    color: #aa0000;
 }
