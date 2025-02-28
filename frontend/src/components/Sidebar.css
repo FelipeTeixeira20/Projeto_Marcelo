@@ -1,113 +1,94 @@
 .sidebar {
-    width: 60px;
-    height: calc(100vh - 70px);
-    background: linear-gradient(90deg, #2a004f, #0d0d1a);
-    color: white;
-    position: fixed;
-    top: 70px;
-    left: 0;
-    padding-right: 8px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding-top: 20px;
-    transition: width 0.3s ease-in-out;
-    overflow: hidden;
-    z-index: 99;
+  width: 70px;
+  height: calc(100vh - 70px);
+  background: linear-gradient(90deg, #2a004f, #0d0d1a);
+  color: white;
+  position: fixed;
+  top: 70px;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease;
+  overflow: hidden;
+  z-index: 99;
 }
 
 .sidebar.open {
-    width: 200px;
-    align-items: flex-start;
-    padding-left: 10px;
+  width: 240px;
 }
 
-/* Botão de abrir e fechar */
+/* Botão de toggle */
 .toggle-btn {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 24px;
-    cursor: pointer;
-    transition: transform 0.3s ease-in-out; /* Adiciona animação */
-    position: absolute;
-    top: 15px;
-    left: 15px;
+  position: absolute;
+  top: 20px;
+  left: 10px;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 22px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
 }
 
 .sidebar.open .toggle-btn {
-    transform: rotate(180deg); /* Faz o botão girar suavemente */
+  transform: rotate(180deg);
 }
 
-/* Menu */
+/* Container do menu */
 .menu {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    margin-top: 60px;
-    align-items: center;
+  margin-top: 80px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 0 5px;
 }
 
-.sidebar.open .menu {
-    align-items: flex-start;
-    padding-left: 5px;
-}
-
-/* Estilo dos itens do menu */
+/* Item do menu */
 .menu-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 0;
-    color: white;
-    text-decoration: none;
-    font-size: 18px;
-    width: 100%;
-    transition: background 0.3s;
-    justify-content: flex-start; /* Centralizado quando fechado */
-    padding-left: 22px;
-}
-
-.sidebar.open .menu-item {
-    justify-content: flex-start;
-    padding-left: 10px; /* Ajuste fino para alinhar os ícones */
-}
-
-.sidebar.open .menu-icon {
-    min-width: 25px; /* Ajuste fino */
-    margin-left: -5px; /* Traz mais para a esquerda */
-    text-align: left;
+  position: relative;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: white;
+  padding: 15px 0;
+  margin: 5px 0;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
 }
 
 .menu-item:hover {
-    background: linear-gradient(90deg, #6b01c9, #28282c);
+  background: linear-gradient(90deg, #6b01c9, #28282c);
 }
 
+/* Ícone do menu */
 .menu-icon {
-    font-size: 22px;
-    min-width: 40px;
-    text-align: center;
-    transition: transform 0.3s ease-in-out;
+  min-width: 50px;
+  font-size: 22px;
+  text-align: center;
+  transition: color 0.3s ease;
 }
 
-
+/* Texto do menu */
 .menu-text {
-    opacity: 1;
-    transition: opacity 0.2s ease-in-out;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: bold;
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
-.sidebar:not(.open) .menu-text {
-    opacity: 0;
-    transition: opacity 0.2s ease-in-out;
-}
-
-
-/* Quando a sidebar abre, o texto aparece */
 .sidebar.open .menu-text {
-    display: inline;
+  opacity: 1;
 }
 
-/* Logout vermelho */
+/* Logout */
 .logout {
-    color: red;
+  margin-top: auto;
+  margin-bottom: 20px;
+  color: #ff4444;
+}
+
+.logout:hover {
+  background: linear-gradient(90deg, #ff4444, #28282c);
+  color: white;
 }
