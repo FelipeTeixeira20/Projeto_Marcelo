@@ -7,22 +7,23 @@ const mongoose = require('mongoose');
 const { auth } = require('./middleware/auth');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
+require('dotenv').config();
 
 // Configuração do Express
 const app = express();
 app.use(cors({
     origin: '*',
-    methods: ['GET', 'POST'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
 }));
 app.use(express.json());
 
-// Conexão com MongoDB
-mongoose.connect('mongodb://localhost:27017/crypto_app', {
+// Conexão com MongoDB Atlas
+mongoose.connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
 })
-.then(() => console.log('Conectado ao MongoDB'))
+.then(() => console.log('Conectado ao MongoDB Atlas'))
 .catch(err => console.error('Erro ao conectar ao MongoDB:', err));
 
 // Rotas de autenticação
