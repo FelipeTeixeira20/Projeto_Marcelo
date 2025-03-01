@@ -32,6 +32,22 @@ app.use('/api/auth', authRoutes);
 // Rotas de gerenciamento de usuários
 app.use('/api/users', userRoutes);
 
+// Rota temporária para criar usuário admin (REMOVER DEPOIS)
+app.get('/setup-admin', async (req, res) => {
+    try {
+        const User = require('./models/User');
+        const admin = new User({
+            username: 'felipe.teixeira',
+            password: '123456',
+            isAdmin: true
+        });
+        await admin.save();
+        res.json({ message: 'Administrador criado com sucesso', admin: admin.username });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Criação do servidor HTTP
 const server = http.createServer(app);
 
