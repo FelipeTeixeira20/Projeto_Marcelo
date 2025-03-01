@@ -45,11 +45,13 @@ const Login = () => {
 
       const { token } = response.data;
 
-      // Salvar o token baseado na opção "lembrar-me"
+      // Salvar o token e o username baseado na opção "lembrar-me"
       if (formData.rememberMe) {
         localStorage.setItem('token', token);
+        localStorage.setItem('username', formData.username);
       } else {
         sessionStorage.setItem('token', token);
+        sessionStorage.setItem('username', formData.username);
       }
 
       navigate('/dashboard');

@@ -9,7 +9,7 @@
     z-index: -1;
 }
 
-/* Grade de fundo (opcional) */
+/* Grade de fundo */
 .grid {
     position: absolute;
     width: 100%;
@@ -17,6 +17,7 @@
     background-image: linear-gradient(rgba(0, 255, 0, 0.1) 1px, transparent 1px),
                       linear-gradient(90deg, rgba(0, 255, 0, 0.1) 1px, transparent 1px);
     background-size: 50px 50px;
+    opacity: 0.5;
 }
 
 /* Linhas animadas em neon verde */
@@ -24,16 +25,23 @@
     position: absolute;
     width: 2px;
     height: 100vh;
-    background: rgba(0, 255, 0, 0.8); /* Cor verde neon */
+    background: rgba(0, 255, 0, 0.5);
     box-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
-    animation: moveLines 5s infinite linear;
+    animation: moveLines 6s infinite linear;
+    opacity: 0.6;
 }
 
-.lines div:nth-child(1) { left: 20%; animation-duration: 4s; }
-.lines div:nth-child(2) { left: 50%; animation-duration: 6s; }
-.lines div:nth-child(3) { left: 80%; animation-duration: 8s; }
+/* Posicionamento e timing das linhas */
+.lines div:nth-child(1) { left: 5%; animation-duration: 4s; }
+.lines div:nth-child(2) { left: 20%; animation-duration: 5s; }
+.lines div:nth-child(3) { left: 35%; animation-duration: 6s; }
+.lines div:nth-child(4) { left: 50%; animation-duration: 7s; }
+.lines div:nth-child(5) { left: 65%; animation-duration: 6.5s; }
+.lines div:nth-child(6) { left: 80%; animation-duration: 5.5s; }
+.lines div:nth-child(7) { left: 95%; animation-duration: 4.5s; }
 
 @keyframes moveLines {
-    0% { transform: translateY(-100%); }
-    100% { transform: translateY(100%); }
+    0% { transform: translateY(-100%); opacity: 0.2; }
+    50% { opacity: 1; transform: translateY(50%); }
+    100% { transform: translateY(100%); opacity: 0.2; }
 }

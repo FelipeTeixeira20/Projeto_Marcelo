@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import axios from 'axios';
 import {
   FaBars,
   FaTimes,
@@ -8,6 +9,7 @@ import {
   FaSignOutAlt,
   FaStar,
   FaUser,
+  FaUsers
 } from "react-icons/fa";
 import { MdShowChart } from "react-icons/md";
 import { useSidebar } from "../context/SidebarContext";
@@ -34,11 +36,30 @@ const MenuItem = ({ to, icon: Icon, text, className = "", onClick }) => {
 const Sidebar = () => {
   const { isOpen, setIsOpen } = useSidebar();
   const navigate = useNavigate();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        const response = await axios.get(`http://${window.location.hostname}:5000/api/users/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setIsAdmin(response.data.isAdmin);
+      } catch (error) {
+        console.error('Erro ao verificar status de admin:', error);
+      }
+    };
+
+    checkAdminStatus();
+  }, []);
 
   const handleLogout = () => {
-    // Remover tokens de autenticação
+    // Remover tokens de autenticação e username
     localStorage.removeItem('token');
+    localStorage.removeItem('username');
     sessionStorage.removeItem('token');
+    sessionStorage.removeItem('username');
     // Redirecionar para a página de login
     navigate('/login');
   };
@@ -50,6 +71,11 @@ const Sidebar = () => {
     { to: "/profile", icon: FaUser, text: "Perfil" },
     { to: "/settings", icon: FaCog, text: "Configurações" },
   ];
+
+  // Adiciona o item de gerenciamento de usuários apenas para admins
+  if (isAdmin) {
+    menuItems.push({ to: "/users", icon: FaUsers, text: "Gerenciar Usuários" });
+  }
 
   return (
     <div className={`sidebar ${isOpen ? "open" : ""}`}>

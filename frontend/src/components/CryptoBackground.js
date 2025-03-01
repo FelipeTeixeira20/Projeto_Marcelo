@@ -9,6 +9,10 @@ const CryptoBackground = () => {
         <div></div>
         <div></div>
         <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
       </div>
     </div>
   );

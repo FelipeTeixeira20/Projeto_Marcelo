@@ -6,6 +6,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const { auth } = require('./middleware/auth');
 const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/users');
 
 // Configuração do Express
 const app = express();
@@ -26,6 +27,9 @@ mongoose.connect('mongodb://localhost:27017/crypto_app', {
 
 // Rotas de autenticação
 app.use('/api/auth', authRoutes);
+
+// Rotas de gerenciamento de usuários
+app.use('/api/users', userRoutes);
 
 // Criação do servidor HTTP
 const server = http.createServer(app);

@@ -8,6 +8,7 @@ import Favorites from "./pages/Favorites";
 import MarketAnalysis from "./pages/MarketAnalysis";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
+import UserManagement from "./pages/UserManagement";
 import PageTransition from "./components/PageTransition";
 import Login from './pages/Login';
 
@@ -59,6 +60,11 @@ function AnimatedRoutes() {
                     <Route path="/settings" element={
                         <PrivateRoute>
                             <Settings />
+                        </PrivateRoute>
+                    } />
+                    <Route path="/users" element={
+                        <PrivateRoute>
+                            <UserManagement />
                         </PrivateRoute>
                     } />
                 </Routes>
