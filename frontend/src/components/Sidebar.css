@@ -41,6 +41,7 @@
   display: flex;
   flex-direction: column;
   padding: 0 5px;
+  height: calc(100% - 80px); /* Altura total menos o margin-top */
 }
 
 /* Item do menu */
@@ -54,6 +55,11 @@
   margin: 5px 0;
   border-radius: 8px;
   transition: background-color 0.3s ease;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
 }
 
 .menu-item:hover {
@@ -83,9 +89,11 @@
 
 /* Logout */
 .logout {
-  margin-top: auto;
+  margin-top: auto !important; /* Força o item para o final */
   margin-bottom: 20px;
   color: #ff4444;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 20px !important;
 }
 
 .logout:hover {

@@ -3,6 +3,9 @@ const http = require('http');
 const WebSocket = require('ws');
 const axios = require('axios');
 const cors = require('cors');
+const mongoose = require('mongoose');
+const { auth } = require('./middleware/auth');
+const authRoutes = require('./routes/auth');
 
 // Configuração do Express
 const app = express();
@@ -11,6 +14,18 @@ app.use(cors({
     methods: ['GET', 'POST'],
     credentials: true
 }));
+app.use(express.json());
+
+// Conexão com MongoDB
+mongoose.connect('mongodb://localhost:27017/crypto_app', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+})
+.then(() => console.log('Conectado ao MongoDB'))
+.catch(err => console.error('Erro ao conectar ao MongoDB:', err));
+
+// Rotas de autenticação
+app.use('/api/auth', authRoutes);
 
 // Criação do servidor HTTP
 const server = http.createServer(app);
@@ -128,8 +143,8 @@ app.get('/', (req, res) => {
     });
 });
 
-// Rota para dados das criptomoedas
-app.get('/api/mexc/prices', async (req, res) => {
+// Rota protegida para dados das criptomoedas
+app.get('/api/mexc/prices', auth, async (req, res) => {
     try {
         const prices = await fetchPrices();
         if (prices) {
