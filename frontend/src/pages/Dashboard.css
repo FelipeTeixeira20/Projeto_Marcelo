@@ -96,24 +96,20 @@
 
 /* 🔍 Container de busca e filtro fixo */
 .search-filter-container {
-    position: sticky;
-    top: 80px;
-    width: 100%;
-    max-width: 800px;
-    margin: 10px auto;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
     gap: 10px;
-    background: rgba(0, 0, 0, 0.85);
-    padding: 10px;
-    z-index: 10;
-    border-radius: 10px;
+    margin-bottom: 20px;
+    justify-content: space-between; /* Ajuda a empurrar os elementos para as extremidades */
+}
+
+/* Campo de busca muito mais largo */
+input.search-input {
+    flex: 4; /* Aumenta a proporção do campo de busca */
+    min-width: 400px; /* Garante uma largura mínima */
 }
 
 /* 🔍 Campo de busca */
 .search-input {
-    flex: 1;
     padding: 12px 15px;
     font-size: 16px;
     border-radius: 8px;
@@ -135,22 +131,26 @@
 
 /* 🔽 Estilo do seletor de filtro */
 .filter-select {
-    padding: 12px 15px;
-    font-size: 16px;
+    min-width: 150px;
+    padding: 8px 12px;
     border-radius: 8px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    background: rgba(0, 0, 0, 0.6);
-    color: white;
-    outline: none;
-    transition: border 0.3s ease-in-out;
+    border: 1px solid #2c2f36;
+    background-color: #1a1d24;
+    color: #fff;
     cursor: pointer;
-    min-width: 160px;
-    text-align: center;
+    font-size: 14px;
+    transition: all 0.3s ease;
 }
 
 /* 🔽 Efeito ao passar o mouse */
 .filter-select:hover {
-    border-color: rgba(107, 1, 201, 0.8);
+    border-color: #3a3d44;
+}
+
+/* 🔽 Efeito ao passar o mouse */
+.filter-select option {
+    background-color: #1a1d24;
+    color: #fff;
 }
 
 /* 🔹 Container das criptomoedas com rolagem */
@@ -264,4 +264,76 @@
 
 .down .price {
     color: #aa0000;
+}
+
+.exchange-selector {
+    margin-bottom: 20px;
+    text-align: right;
+}
+
+.exchange-select {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #2c2f36;
+    background-color: #1a1d24;
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.exchange-select:hover {
+    border-color: #3a3d44;
+}
+
+.exchange-select option {
+    background-color: #1a1d24;
+    color: #fff;
+}
+
+/* Selects menores e agrupados à direita */
+select.search-input {
+    width: 180px; /* Largura fixa para os selects */
+    flex: none; /* Remove o flex para manter tamanho fixo */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 1em;
+    padding-right: 40px;
+}
+
+select.search-input option {
+    background-color: #1a1d24;
+    color: white;
+}
+
+/* Ajuste específico para o select de corretoras */
+select.search-input:last-child {
+    width: 200px; /* Aumentando a largura do último select (corretoras) */
+}
+
+.exchange-indicator {
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.exchange-indicator strong {
+    color: #0ea5e9;
+}
+
+/* Ou para a tag nos cards */
+.exchange-tag {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background-color: #0ea5e9;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    opacity: 0.8;
 }

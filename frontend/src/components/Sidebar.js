@@ -11,7 +11,7 @@ import {
   FaUser,
   FaUsers
 } from "react-icons/fa";
-import { MdShowChart } from "react-icons/md";
+import { MdShowChart, MdAttachMoney } from "react-icons/md";
 import { useSidebar } from "../context/SidebarContext";
 import "./Sidebar.css";
 

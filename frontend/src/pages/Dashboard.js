@@ -28,6 +28,7 @@ const Dashboard = () => {
   // 🔥 Função para buscar dados iniciais da API
   const fetchInitialData = async () => {
     try {
+      // Sempre usa o WebSocket da MEXC para atualizações em tempo real
       const response = await axios.get(
         `http://${SERVER_URL}:5000/api/mexc/prices`
       );
@@ -35,7 +36,8 @@ const Dashboard = () => {
       setLastUpdate(new Date());
     } catch (error) {
       console.error("Erro ao buscar dados:", error.message);
-      setWsStatus("🔴 Erro ao carregar dados");
+      // Não vamos mudar o status do WebSocket quando der erro na busca inicial
+      // setWsStatus("🔴 Erro ao carregar dados");
     }
   };
 
@@ -101,11 +103,10 @@ const Dashboard = () => {
     }
   }, [processNewData]);
 
+  // Adicione o useEffect para buscar dados quando a exchange mudar
   useEffect(() => {
     fetchInitialData();
-    connectWebSocket();
-    return () => ws.current?.close();
-  }, [connectWebSocket]);
+  }, []);
 
   // 🔥 Lazy Loading: Carrega mais cards ao rolar a tela
   const lastCryptoElementRef = useCallback((node) => {
@@ -141,6 +142,12 @@ const Dashboard = () => {
     return 0;
   });
 
+  // Mantenha o useEffect original do WebSocket
+  useEffect(() => {
+    connectWebSocket();
+    return () => ws.current?.close();
+  }, [connectWebSocket]);
+
   return (
     <Layout>
       {/* 🔥 Fundo animado restaurado */}
@@ -149,10 +156,9 @@ const Dashboard = () => {
       <div className="dashboard-container">
         <h2 className="dashboard-title">Mercado de Criptomoedas</h2>
         <p className="dashboard-subtitle">
-          Confira os preços atualizados das moedas na MEXC.
+          Confira os preços atualizados das moedas
         </p>
 
-        {/* 🔥 Restaurando "Última Atualização" e "Status" */}
         <div className="status-container">
           <p className="last-update">
             Última atualização:{" "}
@@ -170,7 +176,7 @@ const Dashboard = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           <select
-            className="filter-select"
+            className="search-input"
             value={sortOption}
             onChange={(e) => setSortOption(e.target.value)}
           >
