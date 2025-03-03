@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Layout from "../components/Layout";
 import { FaStar } from "react-icons/fa";
 import CryptoModal from '../components/CryptoModal';
-import CryptoBackground from "../components/CryptoBackground"; // 🔥 Adicionando o fundo animado
+import CryptoBackground from "../components/CryptoBackground";
 import axios from "axios";
 import "./Favorites.css";
 
@@ -12,8 +12,9 @@ const Favorites = () => {
     const [favorites, setFavorites] = useState([]);
     const [selectedCrypto, setSelectedCrypto] = useState(null);
     const [priceUpdates, setPriceUpdates] = useState({});
-    const [priceChanges, setPriceChanges] = useState({}); // 🔥 Estado para mudança de cor
+    const [priceChanges, setPriceChanges] = useState({});
     const ws = useRef(null);
+    const reconnectTimeout = useRef(null);
 
     useEffect(() => {
         const loadFavorites = () => {
@@ -33,19 +34,27 @@ const Favorites = () => {
     // 🔥 WebSocket para atualizar os preços em tempo real
     useEffect(() => {
         const connectWebSocket = () => {
+            if (ws.current) {
+                ws.current.close();
+            }
+
             ws.current = new WebSocket(`ws://${SERVER_URL}:5000/ws`);
+
+            ws.current.onopen = () => {
+                console.log("🔗 WebSocket conectado.");
+            };
 
             ws.current.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
                     if (Array.isArray(data)) {
                         const updates = {};
-                        const changes = {}; // 🔥 Estado para armazenar mudanças
+                        const changes = {}; 
 
                         data.forEach(item => {
                             updates[item.symbol] = parseFloat(item.price);
 
-                            // 🔥 Detectando a mudança de preço
+                            // 🔥 Verifica se o preço mudou para definir a classe `up` ou `down`
                             if (priceUpdates[item.symbol] !== undefined) {
                                 changes[item.symbol] = updates[item.symbol] > priceUpdates[item.symbol] ? "up" : "down";
                             }
@@ -54,7 +63,6 @@ const Favorites = () => {
                         setPriceUpdates(updates);
                         setPriceChanges(changes);
 
-                        // 🔥 Atualizar os preços no estado de favoritos
                         setFavorites(prevFavorites => 
                             prevFavorites.map(fav => ({
                                 ...fav,
@@ -62,8 +70,16 @@ const Favorites = () => {
                             }))
                         );
 
-                        // 🔥 Resetar a cor após 1 segundo
-                        setTimeout(() => setPriceChanges({}), 1000);
+                        setTimeout(() => {
+                            setPriceChanges(prevChanges => {
+                                const resetChanges = { ...prevChanges };
+                                Object.keys(resetChanges).forEach(symbol => {
+                                    resetChanges[symbol] = "";
+                                });
+                                return resetChanges;
+                            });
+                        }, 2000);
+                        
                     }
                 } catch (error) {
                     console.error("Erro ao processar dados do WebSocket:", error);
@@ -71,7 +87,10 @@ const Favorites = () => {
             };
 
             ws.current.onclose = () => {
-                setTimeout(connectWebSocket, 3000);
+                console.log("⚠️ WebSocket desconectado. Tentando reconectar...");
+                if (!reconnectTimeout.current) {
+                    reconnectTimeout.current = setTimeout(connectWebSocket, 3000);
+                }
             };
         };
 
@@ -80,9 +99,14 @@ const Favorites = () => {
         return () => {
             if (ws.current) {
                 ws.current.close();
+                console.log("🔌 WebSocket fechado ao sair da tela.");
+            }
+            if (reconnectTimeout.current) {
+                clearTimeout(reconnectTimeout.current);
+                reconnectTimeout.current = null;
             }
         };
-    }, [priceUpdates]);
+    }, []);
 
     const handleUnfavorite = (symbol) => {
         const updatedFavorites = favorites.filter(fav => fav.symbol !== symbol);
@@ -113,7 +137,7 @@ const Favorites = () => {
 
     return (
         <Layout>
-            <CryptoBackground /> {/* 🔥 Fundo animado */}
+            <CryptoBackground />
 
             <div className="favorites-container">
                 <div className="favorites-header">
@@ -132,9 +156,10 @@ const Favorites = () => {
                         {favorites.map((coin) => (
                             <div 
                                 key={coin.symbol}
-                                className="favorites-card"
+                                className={`favorites-card ${priceChanges[coin.symbol] ? `favorite-${priceChanges[coin.symbol]}` : ""}`}
                                 onClick={() => handleCardClick(coin.symbol)}
                             >
+                        
                                 <button
                                     className="favorite-button favorited"
                                     onClick={(e) => {
@@ -145,7 +170,7 @@ const Favorites = () => {
                                     <FaStar color="gold" />
                                 </button>
                                 <h3>{coin.symbol}</h3>
-                                <p className={`favorites-price ${priceChanges[coin.symbol] || ""}`}>
+                                <p className="favorites-price">
                                     ${parseFloat(coin.current_price).toFixed(4)}
                                 </p>
                             </div>

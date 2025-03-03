@@ -42,20 +42,20 @@
     width: 100%;
 }
 
-/* Reaproveitando os estilos do card do Dashboard */
+/* 🔥 Mudança de cor do card inteiro ao invés do preço */
 .favorites-card {
     background: rgba(0, 0, 0, 0.8);
     padding: 15px;
     border-radius: 12px;
     text-align: center;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.5s ease-in-out;
     border: 2px solid rgba(255, 255, 255, 0.3);
     position: relative;
     cursor: pointer;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding-top: 30px; /* Espaço para a estrela */
+    padding-top: 30px;
 }
 
 .favorites-card:hover {
@@ -78,13 +78,17 @@
     transition: color 0.5s ease-in-out;
 }
 
-.favorites-price.up {
-    color: #00ff00; /* Verde quando o preço sobe */
+.favorites-card.favorite-up {
+    background: rgba(0, 255, 0, 0.6); /* Verde quando sobe */
+    transition: background 0.8s ease-in-out;
 }
 
-.favorites-price.down {
-    color: #ff0000; /* Vermelho quando o preço desce */
+.favorites-card.favorite-down {
+    background: rgba(255, 0, 0, 0.6); /* Vermelho quando desce */
+    transition: background 0.8s ease-in-out;
 }
+
+
 
 /* Header com título e contador */
 .favorites-header {
