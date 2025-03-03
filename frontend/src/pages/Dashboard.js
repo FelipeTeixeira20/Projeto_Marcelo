@@ -4,6 +4,7 @@ import CryptoBackground from "../components/CryptoBackground"; // 🔥 Voltando 
 import axios from "axios";
 import { FaStar } from "react-icons/fa";
 import "./Dashboard.css";
+import CryptoModal from '../components/CryptoModal'; // Adicione este import
 
 const SERVER_URL =
   window.location.hostname === "192.168.100.26"
@@ -21,6 +22,7 @@ const Dashboard = () => {
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [wsStatus, setWsStatus] = useState("⭕ Desconectado");
   const [priceChanges, setPriceChanges] = useState({});
+  const [selectedCrypto, setSelectedCrypto] = useState(null);
 
   const ws = useRef(null);
   const observer = useRef();
@@ -148,6 +150,28 @@ const Dashboard = () => {
     return () => ws.current?.close();
   }, [connectWebSocket]);
 
+  const handleCardClick = async (symbol) => {
+    try {
+      setSelectedCrypto({ symbol });
+      console.log('Fetching data for:', symbol);
+      
+      const response = await axios.get(`http://localhost:5000/api/mexc/ticker/${encodeURIComponent(symbol)}`);
+      const tickerData = response.data;
+      
+      setSelectedCrypto({
+        symbol,
+        price: tickerData.lastPrice,
+        lastPrice: tickerData.lastPrice,
+        highPrice: tickerData.highPrice,
+        lowPrice: tickerData.lowPrice,
+        volume: tickerData.volume,
+        amount: tickerData.quoteVolume
+      });
+    } catch (error) {
+      console.error('Error fetching ticker data:', error);
+    }
+  };
+
   return (
     <Layout>
       {/* 🔥 Fundo animado restaurado */}
@@ -196,6 +220,7 @@ const Dashboard = () => {
                 className={`crypto-card ${priceChanges[crypto.symbol] || ""} ${
                   favorites.includes(crypto.symbol) ? "favorited" : ""
                 }`}
+                onClick={() => handleCardClick(crypto.symbol)}
               >
                 <h3>{crypto.symbol}</h3>
                 <p className="price">${parseFloat(crypto.price).toFixed(4)}</p>
@@ -203,7 +228,10 @@ const Dashboard = () => {
                   className={`favorite-button ${
                     favorites.includes(crypto.symbol) ? "favorited" : ""
                   }`}
-                  onClick={() => toggleFavorite(crypto.symbol)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavorite(crypto.symbol);
+                  }}
                 >
                   <FaStar />
                 </button>
@@ -211,6 +239,14 @@ const Dashboard = () => {
             ))}
           </div>
         </div>
+
+        {/* Adicione o modal */}
+        {selectedCrypto && (
+          <CryptoModal
+            crypto={selectedCrypto}
+            onClose={() => setSelectedCrypto(null)}
+          />
+        )}
       </div>
     </Layout>
   );

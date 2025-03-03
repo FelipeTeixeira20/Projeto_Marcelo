@@ -194,8 +194,9 @@ input.search-input {
     padding: 15px;
     border-radius: 12px;
     text-align: center;
-    transition: all 0.3s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     border: 2px solid rgba(255, 255, 255, 0.3);
+    cursor: pointer;
 }
 
 /* 🔥 Efeito ao favoritar */
@@ -207,8 +208,8 @@ input.search-input {
 
 /* 🔹 Efeito Hover */
 .crypto-card:hover {
-    transform: scale(1.05);
-    box-shadow: 0px 4px 15px rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 /* 🔹 Estilização do botão de favorito */

@@ -178,6 +178,22 @@ app.get('/api/mexc/prices', auth, async (req, res) => {
     }
 });
 
+// Adicione esta rota junto com as outras rotas da API
+app.get('/api/mexc/ticker/:symbol', async (req, res) => {
+    try {
+        const { symbol } = req.params;
+        console.log("Buscando dados para o símbolo:", symbol);
+        const response = await axios.get('https://api.mexc.com/api/v3/ticker/24hr', {
+            params: { symbol }
+        });
+        console.log("Resposta da MEXC:", response.data);
+        res.json(response.data);
+    } catch (error) {
+        console.error("Erro ao buscar dados do ticker:", error.response?.data || error.message);
+        res.status(500).json({ error: "Erro ao obter dados do ticker" });
+    }
+});
+
 // Inicialização do servidor
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, '0.0.0.0', () => {
