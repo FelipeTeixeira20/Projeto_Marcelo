@@ -190,8 +190,9 @@ input.search-input {
 
 /* 🔹 Estilização do Card de Criptomoeda */
 .crypto-card {
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.3);
     padding: 15px;
+    height: 55%;
     border-radius: 12px;
     text-align: center;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -201,10 +202,12 @@ input.search-input {
 
 /* 🔥 Efeito ao favoritar */
 .crypto-card.favorited {
-    background: linear-gradient(135deg, #6b01c9, #2a004f);
-    border-color: #00FF7F;
-    transform: scale(1.05);
+    background: rgba(107, 1, 201, 0.3); /* 🔥 Mais transparente */
+    border: 2px solid #3a0066; /* 🔥 Roxo escuro para a borda */
+    box-shadow: 0px 4px 15px rgba(147, 41, 255, 0.6); /* 🔥 Sombra neon apenas embaixo */
 }
+
+
 
 /* 🔹 Efeito Hover */
 .crypto-card:hover {
@@ -212,20 +215,29 @@ input.search-input {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
-/* 🔹 Estilização do botão de favorito */
+/* Estilo base do botão de favorito - CINZA por padrão */
 .favorite-button {
     background: transparent;
     border: none;
     cursor: pointer;
     font-size: 20px;
-    color: #777;
-    transition: color 0.3s ease-in-out, transform 0.3s ease-in-out;
-    margin-top: 10px;
+    transition: all 0.3s ease;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+    padding: 0;
+    margin: 0;
 }
 
-/* 🔥 Efeito ao favoritar */
+
+/* SOMENTE quando favoritado fica amarelo */
 .favorite-button.favorited {
     color: gold;
+}
+
+/* Efeito hover - mantém a mesma cor, só muda o tamanho */
+.favorite-button:hover {
     transform: scale(1.2);
 }
 
