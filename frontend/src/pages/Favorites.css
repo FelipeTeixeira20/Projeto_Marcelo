@@ -1,147 +1,155 @@
 /* Container principal */
 .favorites-container {
-    padding: 20px;
-    max-width: 1200px;
-    margin: 0 auto;
-    min-height: 100vh;
-    position: relative;
-    background: transparent;
-    color: white;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: 100vh;
+  position: relative;
+  background: transparent;
+  color: white;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 /* Título */
 .favorites-title {
-    font-size: 2rem;
-    font-weight: bold;
-    text-transform: uppercase;
-    color: #fff;
-    margin-bottom: 20px;
-    letter-spacing: 2px;
-    text-shadow: 0 0 10px rgba(107, 1, 201, 0.8);
+  font-size: 2rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: #fff;
+  margin-bottom: 20px;
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px rgba(107, 1, 201, 0.8);
 }
 
 /* Mensagem quando não há favoritos */
 .empty-message {
-    text-align: center;
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 1.1rem;
-    margin-top: 40px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.1rem;
+  margin-top: 40px;
 }
 
 /* Grid de favoritos */
 .favorites-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 15px;
-    justify-content: center;
-    padding: 20px 0;
-    width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 15px;
+  justify-content: center;
+  padding: 20px 0;
+  width: 100%;
 }
 
 /* 🔥 Mudança de cor do card inteiro ao invés do preço */
 .favorites-card {
-    background: rgba(0, 0, 0, 0.8);
-    padding: 15px;
-    border-radius: 12px;
-    text-align: center;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.5s ease-in-out;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    position: relative;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding-top: 30px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 15px;
+  height: 120px;
+  border-radius: 12px;
+  text-align: center;
+  transition: all 0.2s ease-in-out;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .favorites-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .favorites-card h3 {
-    margin-top: 0;
-    width: 100%;
-    text-align: center;
-    color: white;
-    font-size: 1.2rem;
+  margin-top: 0;
+  width: 100%;
+  text-align: center;
+  color: white;
+  font-size: 1.2rem;
 }
 
-/* Preço com mudança de cor */
+/* Efeito de mudança de preço */
+.favorites-card.up {
+  background-color: rgba(0, 255, 0, 0.1);
+  border-color: #00ff00;
+}
+
+.favorites-card.down {
+  background-color: rgba(255, 0, 0, 0.1);
+  border-color: #ff0000;
+}
+
 .favorites-price {
-    font-size: 1.2em;
-    font-weight: bold;
-    transition: color 0.5s ease-in-out;
+  font-size: 1.2em;
+  font-weight: bold;
+  margin: 10px 0;
+  transition: all 0.3s ease;
 }
 
-.favorites-card.favorite-up {
-    background: rgba(0, 255, 0, 0.6); /* Verde quando sobe */
-    transition: background 0.8s ease-in-out;
+.favorites-card.up .favorites-price {
+  color: #00aa00;
 }
 
-.favorites-card.favorite-down {
-    background: rgba(255, 0, 0, 0.6); /* Vermelho quando desce */
-    transition: background 0.8s ease-in-out;
+.favorites-card.down .favorites-price {
+  color: #aa0000;
 }
-
-
 
 /* Header com título e contador */
 .favorites-header {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
 }
 
 .favorites-count {
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.1rem;
 }
 
 .favorites-count span {
-    color: #6b01c9;
-    font-weight: bold;
-    font-size: 1.2rem;
+  color: #6b01c9;
+  font-weight: bold;
+  font-size: 1.2rem;
 }
 
 /* Botão de favorito */
 .favorite-button {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    font-size: 20px;
-    color: gold;
-    transition: transform 0.2s ease;
-    z-index: 2;
-    padding: 0;
-    margin: 0;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  color: gold;
+  transition: transform 0.2s ease;
+  z-index: 2;
+  padding: 0;
+  margin: 0;
 }
 
 .favorite-button:hover {
-    transform: scale(1.2);
+  transform: scale(1.2);
 }
 
 .favorite-button.favorited {
-    color: gold;
+  color: gold;
 }
 
 /* Responsividade */
 @media (max-width: 768px) {
-    .favorites-grid {
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    }
-    .favorites-header {
-        flex-direction: column;
-        text-align: center;
-        gap: 10px;
-    }
+  .favorites-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+  .favorites-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+  }
 }

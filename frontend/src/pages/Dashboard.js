@@ -4,7 +4,7 @@ import CryptoBackground from "../components/CryptoBackground"; // 🔥 Voltando 
 import axios from "axios";
 import { FaStar } from "react-icons/fa";
 import "./Dashboard.css";
-import CryptoModal from '../components/CryptoModal'; // Adicione este import
+import CryptoModal from "../components/CryptoModal"; // Adicione este import
 
 const SERVER_URL =
   window.location.hostname === "192.168.100.26"
@@ -123,46 +123,54 @@ const Dashboard = () => {
 
   const toggleFavorite = (symbol) => {
     setFavorites((prev) => {
-        const newFavorites = prev.includes(symbol)
-            ? prev.filter((fav) => fav !== symbol)
-            : [...prev, symbol];
-        
-        // Encontrar os dados completos da moeda
-        const coinData = cryptos.find(crypto => crypto.symbol === symbol);
-        
-        // Recuperar favoritos existentes do localStorage
-        const storedFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
-        
-        if (prev.includes(symbol)) {
-            // Remover dos favoritos
-            const updatedFavorites = storedFavorites.filter(fav => fav.symbol !== symbol);
-            localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
-        } else {
-            // Adicionar aos favoritos
-            const favoriteData = {
-                id: symbol,
-                symbol: coinData.symbol,
-                name: coinData.symbol, // Como não temos o nome completo, usando symbol
-                image: `https://s2.coinmarketcap.com/static/img/coins/64x64/${coinData.id || 1}.png`, // URL genérica de exemplo
-                current_price: parseFloat(coinData.price),
-                price_change_24h: 0, // Adicionar se tiver esse dado
-                price_change_percentage_24h: 0 // Adicionar se tiver esse dado
-            };
-            
-            localStorage.setItem('favorites', JSON.stringify([...storedFavorites, favoriteData]));
-        }
-        
-        return newFavorites;
+      const newFavorites = prev.includes(symbol)
+        ? prev.filter((fav) => fav !== symbol)
+        : [...prev, symbol];
+
+      // Encontrar os dados completos da moeda
+      const coinData = cryptos.find((crypto) => crypto.symbol === symbol);
+
+      // Recuperar favoritos existentes do localStorage
+      const storedFavorites =
+        JSON.parse(localStorage.getItem("favorites")) || [];
+
+      if (prev.includes(symbol)) {
+        // Remover dos favoritos
+        const updatedFavorites = storedFavorites.filter(
+          (fav) => fav.symbol !== symbol
+        );
+        localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
+      } else {
+        // Adicionar aos favoritos
+        const favoriteData = {
+          id: symbol,
+          symbol: coinData.symbol,
+          name: coinData.symbol, // Como não temos o nome completo, usando symbol
+          image: `https://s2.coinmarketcap.com/static/img/coins/64x64/${
+            coinData.id || 1
+          }.png`, // URL genérica de exemplo
+          current_price: parseFloat(coinData.price),
+          price_change_24h: 0, // Adicionar se tiver esse dado
+          price_change_percentage_24h: 0, // Adicionar se tiver esse dado
+        };
+
+        localStorage.setItem(
+          "favorites",
+          JSON.stringify([...storedFavorites, favoriteData])
+        );
+      }
+
+      return newFavorites;
     });
   };
 
   // Também precisamos carregar os favoritos quando o componente montar
   useEffect(() => {
-    const storedFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
-    setFavorites(storedFavorites.map(fav => fav.symbol)); // Guardamos apenas os símbolos no estado
+    const storedFavorites = JSON.parse(localStorage.getItem("favorites")) || [];
+    setFavorites(storedFavorites.map((fav) => fav.symbol)); // Guardamos apenas os símbolos no estado
   }, []);
 
-  // �� Filtrando criptomoedas conforme a busca
+  // 🔄 Filtrando criptomoedas conforme a busca
   const filteredCryptos = cryptos.filter((crypto) =>
     crypto.symbol.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -186,11 +194,13 @@ const Dashboard = () => {
   const handleCardClick = async (symbol) => {
     try {
       setSelectedCrypto({ symbol });
-      console.log('Fetching data for:', symbol);
-      
-      const response = await axios.get(`http://localhost:5000/api/mexc/ticker/${encodeURIComponent(symbol)}`);
+      console.log("Fetching data for:", symbol);
+
+      const response = await axios.get(
+        `http://localhost:5000/api/mexc/ticker/${encodeURIComponent(symbol)}`
+      );
       const tickerData = response.data;
-      
+
       setSelectedCrypto({
         symbol,
         price: tickerData.lastPrice,
@@ -198,10 +208,10 @@ const Dashboard = () => {
         highPrice: tickerData.highPrice,
         lowPrice: tickerData.lowPrice,
         volume: tickerData.volume,
-        amount: tickerData.quoteVolume
+        amount: tickerData.quoteVolume,
       });
     } catch (error) {
-      console.error('Error fetching ticker data:', error);
+      console.error("Error fetching ticker data:", error);
     }
   };
 
@@ -255,8 +265,6 @@ const Dashboard = () => {
                 }`}
                 onClick={() => handleCardClick(crypto.symbol)}
               >
-                <h3>{crypto.symbol}</h3>
-                <p className="price">${parseFloat(crypto.price).toFixed(4)}</p>
                 <button
                   className="favorite-button"
                   onClick={(e) => {
@@ -264,8 +272,10 @@ const Dashboard = () => {
                     toggleFavorite(crypto.symbol);
                   }}
                 >
-                  <FaStar color={favorites.includes(crypto.symbol) ? "gold" : "gray"} />
+                  <FaStar />
                 </button>
+                <h3>{crypto.symbol}</h3>
+                <p className="price">${parseFloat(crypto.price).toFixed(4)}</p>
               </div>
             ))}
           </div>

@@ -1,352 +1,401 @@
 /* 🔹 Estilo do container principal */
 .dashboard-container {
-    padding: 20px;
-    max-width: 1200px;
-    margin: 0 auto;
-    min-height: 100vh; /* 🔥 Garante que a página ocupa toda a altura da tela */
-    border-radius: 8px;
-    box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.2);
-    position: relative;
-    background: transparent;
-    color: white;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: 100vh; /* 🔥 Garante que a página ocupa toda a altura da tela */
+  border-radius: 8px;
+  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.2);
+  position: relative;
+  background: transparent;
+  color: white;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 /* 🔹 Fundo animado */
 .animated-background {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: #000; /* Fundo preto */
-    overflow: hidden;
-    z-index: -10;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #000; /* Fundo preto */
+  overflow: hidden;
+  z-index: -10;
 }
 
 /* 🔹 Animação das linhas */
 .animated-lines {
-    position: absolute;
-    width: 100%;
-    height: 100%;
+  position: absolute;
+  width: 100%;
+  height: 100%;
 }
 
 .animated-lines div {
-    position: absolute;
-    width: 2px;
-    height: 100vh;
-    background: rgba(0, 255, 0, 0.5);
-    box-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
-    animation: moveLines 6s infinite linear;
-    opacity: 0.6;
+  position: absolute;
+  width: 2px;
+  height: 100vh;
+  background: rgba(0, 255, 0, 0.5);
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+  animation: moveLines 6s infinite linear;
+  opacity: 0.6;
 }
 
 /* 🔹 Posição das linhas animadas */
-.animated-lines div:nth-child(1) { left: 5%; animation-duration: 4s; }
-.animated-lines div:nth-child(2) { left: 20%; animation-duration: 5s; }
-.animated-lines div:nth-child(3) { left: 35%; animation-duration: 6s; }
-.animated-lines div:nth-child(4) { left: 50%; animation-duration: 7s; }
-.animated-lines div:nth-child(5) { left: 65%; animation-duration: 6.5s; }
-.animated-lines div:nth-child(6) { left: 80%; animation-duration: 5.5s; }
-.animated-lines div:nth-child(7) { left: 95%; animation-duration: 4.5s; }
+.animated-lines div:nth-child(1) {
+  left: 5%;
+  animation-duration: 4s;
+}
+.animated-lines div:nth-child(2) {
+  left: 20%;
+  animation-duration: 5s;
+}
+.animated-lines div:nth-child(3) {
+  left: 35%;
+  animation-duration: 6s;
+}
+.animated-lines div:nth-child(4) {
+  left: 50%;
+  animation-duration: 7s;
+}
+.animated-lines div:nth-child(5) {
+  left: 65%;
+  animation-duration: 6.5s;
+}
+.animated-lines div:nth-child(6) {
+  left: 80%;
+  animation-duration: 5.5s;
+}
+.animated-lines div:nth-child(7) {
+  left: 95%;
+  animation-duration: 4.5s;
+}
 
 @keyframes moveLines {
-    0% { transform: translateY(-100%); opacity: 0.2; }
-    50% { opacity: 1; transform: translateY(50%); }
-    100% { transform: translateY(100%); opacity: 0.2; }
+  0% {
+    transform: translateY(-100%);
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(50%);
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0.2;
+  }
 }
 
 /* 🔹 Título e subtítulo fixos */
 .header-container {
-    position: sticky;
-    top: 0;
-    width: 100%;
-    background: rgba(0, 0, 0, 0.85);
-    padding: 15px 0;
-    z-index: 10;
-    text-align: center;
+  position: sticky;
+  top: 0;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  padding: 15px 0;
+  z-index: 10;
+  text-align: center;
 }
 
 /* 🔹 Estilização do Título */
 .dashboard-title {
-    font-size: 2rem;
-    font-weight: bold;
-    text-transform: uppercase;
-    color: #fff;
-    margin-bottom: 5px;
-    letter-spacing: 2px;
-    text-shadow: 0 0 10px rgba(107, 1, 201, 0.8);
-    animation: glowEffect 1.5s infinite alternate ease-in-out;
+  font-size: 2rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: #fff;
+  margin-bottom: 5px;
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px rgba(107, 1, 201, 0.8);
+  animation: glowEffect 1.5s infinite alternate ease-in-out;
 }
 
 /* 🔹 Subtítulo */
 .dashboard-subtitle {
-    font-size: 1rem;
-    color: rgba(255, 255, 255, 0.7);
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 /* 🔹 Brilho animado no título */
 @keyframes glowEffect {
-    0% { text-shadow: 0 0 5px rgba(107, 1, 201, 0.8); }
-    100% { text-shadow: 0 0 15px rgba(107, 1, 201, 1); }
+  0% {
+    text-shadow: 0 0 5px rgba(107, 1, 201, 0.8);
+  }
+  100% {
+    text-shadow: 0 0 15px rgba(107, 1, 201, 1);
+  }
 }
 
 /* 🔍 Container de busca e filtro fixo */
 .search-filter-container {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-    justify-content: space-between; /* Ajuda a empurrar os elementos para as extremidades */
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  justify-content: space-between; /* Ajuda a empurrar os elementos para as extremidades */
 }
 
 /* Campo de busca muito mais largo */
 input.search-input {
-    flex: 4; /* Aumenta a proporção do campo de busca */
-    min-width: 400px; /* Garante uma largura mínima */
+  flex: 4; /* Aumenta a proporção do campo de busca */
+  min-width: 400px; /* Garante uma largura mínima */
 }
 
 /* 🔍 Campo de busca */
 .search-input {
-    padding: 12px 15px;
-    font-size: 16px;
-    border-radius: 8px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    background: rgba(0, 0, 0, 0.6);
-    color: white;
-    outline: none;
-    transition: border 0.3s ease-in-out;
+  padding: 12px 15px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  outline: none;
+  transition: border 0.3s ease-in-out;
 }
 
 .search-input::placeholder {
-    color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 /* 🔍 Efeito ao focar */
 .search-input:focus {
-    border-color: rgba(107, 1, 201, 0.8);
+  border-color: rgba(107, 1, 201, 0.8);
 }
 
 /* 🔽 Estilo do seletor de filtro */
 .filter-select {
-    min-width: 150px;
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: 1px solid #2c2f36;
-    background-color: #1a1d24;
-    color: #fff;
-    cursor: pointer;
-    font-size: 14px;
-    transition: all 0.3s ease;
+  min-width: 150px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #2c2f36;
+  background-color: #1a1d24;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
 }
 
 /* 🔽 Efeito ao passar o mouse */
 .filter-select:hover {
-    border-color: #3a3d44;
+  border-color: #3a3d44;
 }
 
 /* 🔽 Efeito ao passar o mouse */
 .filter-select option {
-    background-color: #1a1d24;
-    color: #fff;
+  background-color: #1a1d24;
+  color: #fff;
 }
 
 /* 🔹 Container das criptomoedas com rolagem */
 .crypto-container {
-    flex-grow: 1;
-    height: calc(100vh - 180px); /* 🔥 Define altura fixa para não sumir o título */
-    overflow-y: auto;
-    padding: 10px;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
-    width: 100%;
+  flex-grow: 1;
+  height: calc(
+    100vh - 180px
+  ); /* 🔥 Define altura fixa para não sumir o título */
+  overflow-y: auto;
+  padding: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+  width: 100%;
 }
 
 /* 🔹 Personalizando a barra de rolagem */
 .crypto-container::-webkit-scrollbar {
-    width: 8px;
+  width: 8px;
 }
 
 .crypto-container::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
 }
 
 .crypto-container::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.4);
-    border-radius: 10px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 10px;
 }
 
 /* 🔹 Grid das criptomoedas */
 .crypto-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 15px;
-    justify-content: center;
-    padding-bottom: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 15px;
+  justify-content: center;
+  padding-bottom: 10px;
 }
 
 /* 🔹 Estilização do Card de Criptomoeda */
 .crypto-card {
-    background: rgba(0, 0, 0, 0.3);
-    padding: 15px;
-    height: 55%;
-    border-radius: 12px;
-    text-align: center;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    cursor: pointer;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 15px;
+  height: 120px; /* Altura fixa para o card */
+  border-radius: 12px;
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  position: relative; /* Importante para o posicionamento absoluto do botão */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 /* 🔥 Efeito ao favoritar */
 .crypto-card.favorited {
-    background: rgba(107, 1, 201, 0.3); /* 🔥 Mais transparente */
-    border: 2px solid #3a0066; /* 🔥 Roxo escuro para a borda */
-    box-shadow: 0px 4px 15px rgba(147, 41, 255, 0.6); /* 🔥 Sombra neon apenas embaixo */
+  background: rgba(107, 1, 201, 0.3); /* 🔥 Mais transparente */
+  border: 2px solid #3a0066; /* 🔥 Roxo escuro para a borda */
+  box-shadow: 0px 4px 15px rgba(147, 41, 255, 0.6); /* 🔥 Sombra neon apenas embaixo */
 }
-
-
 
 /* 🔹 Efeito Hover */
 .crypto-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
-/* Estilo base do botão de favorito - CINZA por padrão */
+/* Estilo base do botão de favorito */
 .favorite-button {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    font-size: 20px;
-    transition: all 0.3s ease;
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 2;
-    padding: 0;
-    margin: 0;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  transition: transform 0.3s ease;
 }
 
-
-/* SOMENTE quando favoritado fica amarelo */
-.favorite-button.favorited {
-    color: gold;
+.favorite-button svg {
+  width: 20px;
+  height: 20px;
+  color: gray;
 }
 
-/* Efeito hover - mantém a mesma cor, só muda o tamanho */
+.favorited .favorite-button svg {
+  color: gold;
+}
+
 .favorite-button:hover {
-    transform: scale(1.2);
+  transform: scale(1.2);
+}
+
+/* Remove qualquer estilo adicional que possa estar interferindo */
+.favorite-button:focus {
+  outline: none;
 }
 
 /* 🔹 Responsividade */
 @media (max-width: 768px) {
-    .search-filter-container {
-        flex-direction: column;
-        width: 100%;
-    }
-    .crypto-grid {
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    }
-    .search-input, .filter-select {
-        width: 100%;
-    }
+  .search-filter-container {
+    flex-direction: column;
+    width: 100%;
+  }
+  .crypto-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+  .search-input,
+  .filter-select {
+    width: 100%;
+  }
 }
 
 .crypto-card.up {
-    background-color: rgba(0, 255, 0, 0.1);
-    border-color: #00ff00;
+  background-color: rgba(0, 255, 0, 0.1);
+  border-color: #00ff00;
 }
 
 .crypto-card.down {
-    background-color: rgba(255, 0, 0, 0.1);
-    border-color: #ff0000;
+  background-color: rgba(255, 0, 0, 0.1);
+  border-color: #ff0000;
 }
 
 .price {
-    font-size: 1.2em;
-    font-weight: bold;
-    transition: all 0.3s ease;
+  font-size: 1.2em;
+  font-weight: bold;
+  transition: all 0.3s ease;
 }
 
 .up .price {
-    color: #00aa00;
+  color: #00aa00;
 }
 
 .down .price {
-    color: #aa0000;
+  color: #aa0000;
 }
 
 .exchange-selector {
-    margin-bottom: 20px;
-    text-align: right;
+  margin-bottom: 20px;
+  text-align: right;
 }
 
 .exchange-select {
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: 1px solid #2c2f36;
-    background-color: #1a1d24;
-    color: #fff;
-    cursor: pointer;
-    font-size: 14px;
-    transition: all 0.3s ease;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #2c2f36;
+  background-color: #1a1d24;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
 }
 
 .exchange-select:hover {
-    border-color: #3a3d44;
+  border-color: #3a3d44;
 }
 
 .exchange-select option {
-    background-color: #1a1d24;
-    color: #fff;
+  background-color: #1a1d24;
+  color: #fff;
 }
 
 /* Selects menores e agrupados à direita */
 select.search-input {
-    width: 180px; /* Largura fixa para os selects */
-    flex: none; /* Remove o flex para manter tamanho fixo */
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    cursor: pointer;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 1em;
-    padding-right: 40px;
+  width: 180px; /* Largura fixa para os selects */
+  flex: none; /* Remove o flex para manter tamanho fixo */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 1em;
+  padding-right: 40px;
 }
 
 select.search-input option {
-    background-color: #1a1d24;
-    color: white;
+  background-color: #1a1d24;
+  color: white;
 }
 
 /* Ajuste específico para o select de corretoras */
 select.search-input:last-child {
-    width: 200px; /* Aumentando a largura do último select (corretoras) */
+  width: 200px; /* Aumentando a largura do último select (corretoras) */
 }
 
 .exchange-indicator {
-    color: #64748b;
-    font-size: 0.9rem;
+  color: #64748b;
+  font-size: 0.9rem;
 }
 
 .exchange-indicator strong {
-    color: #0ea5e9;
+  color: #0ea5e9;
 }
 
 /* Ou para a tag nos cards */
 .exchange-tag {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background-color: #0ea5e9;
-    color: white;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 0.7rem;
-    opacity: 0.8;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background-color: #0ea5e9;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  opacity: 0.8;
 }
