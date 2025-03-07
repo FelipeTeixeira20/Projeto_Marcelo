@@ -59,6 +59,11 @@ router.put('/:id', auth, isAdmin, async (req, res) => {
       return res.status(404).json({ message: 'Usuário não encontrado' });
     }
 
+    // 🔥 Validação para garantir no mínimo 2 caracteres
+    if (username && username.length < 2) {
+      return res.status(400).json({ message: 'O nome de usuário deve ter pelo menos 2 caracteres.' });
+    }
+
     if (username) user.username = username;
     if (password) user.password = password;
     if (typeof isAdmin !== 'undefined') user.isAdmin = isAdmin;

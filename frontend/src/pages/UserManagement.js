@@ -54,17 +54,30 @@ const UserManagement = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+
+      let updateData = {
+        username: editingUser.username,
+        isAdmin: editingUser.isAdmin,
+      };
+
+      // Só adiciona a senha se o usuário digitou algo
+      if (editingUser.password && editingUser.password.trim() !== '') {
+        updateData.password = editingUser.password;
+      }
+
       await axios.put(
         `http://${SERVER_URL}:5000/api/users/${editingUser._id}`,
-        editingUser,
+        updateData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
       setEditingUser(null);
       fetchUsers();
     } catch (err) {
       setError(err.response?.data?.message || 'Erro ao atualizar usuário');
     }
-  };
+};
+
 
   const handleDeleteUser = async (userId) => {
     if (!window.confirm('Tem certeza que deseja deletar este usuário?')) return;
