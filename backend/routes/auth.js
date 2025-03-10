@@ -58,4 +58,9 @@ router.post('/login', async (req, res) => {
   }
 });
 
+router.get('/', (req, res) => {
+  res.json({ message: "API de autenticação funcionando! Use /register ou /login." });
+});
+
+
 module.exports = router; 

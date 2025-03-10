@@ -32,6 +32,19 @@ app.use('/api/auth', authRoutes);
 // Rotas de gerenciamento de usuários
 app.use('/api/users', userRoutes);
 
+// Importação das rotas das exchanges
+const binanceRoutes = require('./crypto-analyzer/routes/binanceRoutes');
+const bitgetRoutes = require('./crypto-analyzer/routes/bitgetRoutes');
+const gateioRoutes = require('./crypto-analyzer/routes/gateioRoutes');
+const kucoinRoutes = require('./crypto-analyzer/routes/kucoinRoutes');
+
+// Registro das rotas no Express
+app.use('/api/binance', binanceRoutes);
+app.use('/api/bitget', bitgetRoutes);
+app.use('/api/gateio', gateioRoutes);
+app.use('/api/kucoin', kucoinRoutes);
+
+
 // Rota temporária para criar usuário admin (REMOVER DEPOIS)
 app.get('/setup-admin', async (req, res) => {
     try {

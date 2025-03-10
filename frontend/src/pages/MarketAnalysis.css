@@ -1,4 +1,4 @@
-/* MarketAnalysis.css - Ajustado para a tela de Análise de Mercado */
+/* MarketAnalysis.css - Estilos para a tela de Análise de Mercado */
 
 .market-analysis-container {
     padding: 20px;
@@ -35,29 +35,20 @@
     z-index: -2;
 }
 
-/* Posição e movimentação aleatória das linhas */
 @keyframes moveLines {
     0% { transform: translateY(-100%) translateX(0); opacity: 0.2; }
     50% { opacity: 1; transform: translateY(50%) translateX(5px); }
     100% { transform: translateY(100%) translateX(-5px); opacity: 0.2; }
 }
 
-/* Mantendo o estilo original da caixa de filtro e botões */
+/* Caixa de filtro de exchanges */
 .exchange-box {
     background: rgba(0, 0, 0, 0.8);
     padding: 20px;
     border-radius: 12px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
     text-align: center;
     margin-bottom: 20px;
-    transition: box-shadow 0.3s ease-in-out;
-    position: relative;
-    z-index: 1;
     border: 2px solid rgba(255, 255, 255, 0.3);
-}
-
-.exchange-box:hover {
-    box-shadow: 0px 6px 15px rgba(255, 255, 255, 0.1);
 }
 
 .exchange-filter {
@@ -90,12 +81,108 @@
     color: white;
 }
 
+/* Filtro de Comparação */
+.filter-box {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.filter-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.filter-button {
+    padding: 12px 18px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    border: 2px solid transparent;
+    color: #ccc;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    min-width: 120px;
+    text-align: center;
+}
+
+.filter-button:hover {
+    filter: brightness(1.2);
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.filter-button.active {
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+    border: 2px solid #6b01c9;
+}
+
+/* 🔥 Estilização dos Cards de Comparação */
+.comparisons-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+    padding: 10px;
+}
+
+.comparison-card {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    position: relative;
+    cursor: pointer;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.comparison-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+}
+
+.comparison-card h3 {
+    color: white;
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+}
+
+.comparison-card p {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 5px 0;
+}
+
+.profit.positive {
+    color: #00ff00;
+    font-weight: bold;
+}
+
+.profit.negative {
+    color: #ff0000;
+    font-weight: bold;
+}
+
+.funding-rate.positive {
+    color: #00ff00;
+    font-weight: bold;
+}
+
+.funding-rate.negative {
+    color: #ff0000;
+    font-weight: bold;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
 @media (max-width: 768px) {
-    .exchange-filter {
-        flex-direction: column;
-        align-items: center;
-    }
-    .exchange-button {
-        width: 100%;
+    .comparisons-container {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     }
 }
