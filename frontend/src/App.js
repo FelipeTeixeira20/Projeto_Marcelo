@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { SidebarProvider } from "./context/SidebarContext";
+import { SettingsProvider } from "./context/SettingsContext"; // 🔥 Importando o novo contexto
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
 import Favorites from "./pages/Favorites";
@@ -12,7 +13,7 @@ import UserManagement from "./pages/UserManagement";
 import PageTransition from "./components/PageTransition";
 import Login from './pages/Login';
 
-// Componente para controlar o scroll
+// Componente para controlar o scroll ao trocar de página
 function ScrollToTop() {
     const { pathname } = useLocation();
 
@@ -34,14 +35,11 @@ function AnimatedRoutes() {
                 <Routes location={location} key={location.pathname}>
                     <Route path="/login" element={<Login />} />
                     <Route path="/" element={<Login />} />
-                    <Route
-                        path="/dashboard"
-                        element={
-                            <PrivateRoute>
-                                <Dashboard />
-                            </PrivateRoute>
-                        }
-                    />
+                    <Route path="/dashboard" element={
+                        <PrivateRoute>
+                            <Dashboard />
+                        </PrivateRoute>
+                    } />
                     <Route path="/market-analysis" element={
                         <PrivateRoute>
                             <MarketAnalysis />
@@ -80,12 +78,14 @@ const PrivateRoute = ({ children }) => {
 
 function App() {
     return (
-        <SidebarProvider>
-            <Router>
-                <ScrollToTop />
-                <AnimatedRoutes />
-            </Router>
-        </SidebarProvider>
+        <SettingsProvider> {/* 🔥 Agora todas as páginas têm acesso ao contexto de configurações */}
+            <SidebarProvider>
+                <Router>
+                    <ScrollToTop />
+                    <AnimatedRoutes />
+                </Router>
+            </SidebarProvider>
+        </SettingsProvider>
     );
 }
 

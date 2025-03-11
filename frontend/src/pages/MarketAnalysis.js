@@ -12,23 +12,62 @@ const exchanges = [
 ];
 
 const MarketAnalysis = () => {
-    const [prices, setPrices] = useState([]);
+    const [prices, setPrices] = useState({});
     const [loading, setLoading] = useState(true);
     const [selectedExchanges, setSelectedExchanges] = useState(exchanges.map(e => e.name));
     const [comparisonData, setComparisonData] = useState([]);
     const [filter, setFilter] = useState("all");
+    const [searchTerm, setSearchTerm] = useState("");
+    const [sortOption, setSortOption] = useState("");
 
     useEffect(() => {
-        const fetchData = async () => {
+        const fetchPrices = async () => {
             try {
-                const response = await axios.get("https://api.mexc.com/api/v3/ticker/price");
-                setPrices(response.data);
+                const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+                if (!token) {
+                    console.error("Erro: Token não encontrado.");
+                    return;
+                }
+
+                const responses = await Promise.all([
+                    axios.get("http://localhost:5000/api/binance/prices", {
+                        headers: { Authorization: `Bearer ${token}` }
+                    }),
+                    axios.get("http://localhost:5000/api/bitget/prices", {
+                        headers: { Authorization: `Bearer ${token}` }
+                    }),
+                    axios.get("http://localhost:5000/api/gateio/prices", {
+                        headers: { Authorization: `Bearer ${token}` }
+                    }),
+                    axios.get("http://localhost:5000/api/kucoin/prices", {
+                        headers: { Authorization: `Bearer ${token}` }
+                    }),
+                    axios.get("http://localhost:5000/api/mexc/prices", {
+                        headers: { Authorization: `Bearer ${token}` }
+                    })
+                ]);
+
+                const formattedPrices = {
+                    Binance: responses[0].data,
+                    Bitget: responses[1].data,
+                    "Gate.io": responses[2].data,
+                    KuCoin: responses[3].data,
+                    MEXC: responses[4].data
+                };
+
+                console.log("✅ Dados carregados com sucesso:", formattedPrices);
+
+                setPrices(formattedPrices);
                 setLoading(false);
             } catch (error) {
-                console.error("Erro ao buscar dados: ", error);
+                console.error("❌ Erro ao buscar preços:", error);
             }
         };
-        fetchData();
+
+        fetchPrices();
+        const interval = setInterval(fetchPrices, 5000);
+
+        return () => clearInterval(interval);
     }, []);
 
     const toggleExchange = (exchange) => {
@@ -38,69 +77,77 @@ const MarketAnalysis = () => {
     };
 
     useEffect(() => {
-        if (selectedExchanges.length < 2 || prices.length === 0) return;
+        if (selectedExchanges.length < 2 || Object.keys(prices).length === 0) return;
 
         const generateComparisons = () => {
             const newComparisons = [];
-            for (let i = 0; i < selectedExchanges.length; i++) {
-                for (let j = i + 1; j < selectedExchanges.length; j++) {
-                    const exchange1 = selectedExchanges[i];
-                    const exchange2 = selectedExchanges[j];
+            const symbols = new Set();
 
-                    prices.forEach(crypto => {
-                        if (crypto.symbol.includes("USDT")) {
-                            const price1 = parseFloat((Math.random() * 100 + 10).toFixed(4));
-                            const price2 = parseFloat((Math.random() * 100 + 10).toFixed(4));
+            Object.values(prices).forEach(exchangePrices => {
+                exchangePrices.forEach(crypto => {
+                    symbols.add(crypto.symbol);
+                });
+            });
 
-                            if (price1 && price2) {
-                                const profitPercent = ((price2 - price1) / price1) * 100;
-                                const fundingRate = (Math.random() * 0.05).toFixed(4);
+            symbols.forEach(symbol => {
+                selectedExchanges.forEach((exchange1, i) => {
+                    selectedExchanges.slice(i + 1).forEach(exchange2 => {
+                        let price1 = prices[exchange1]?.find(c => c.symbol === symbol)?.price;
+                        let price2 = prices[exchange2]?.find(c => c.symbol === symbol)?.price;
 
-                                newComparisons.push({
-                                    symbol: crypto.symbol,
-                                    exchange1,
-                                    exchange2,
-                                    price1: price1.toFixed(4),
-                                    price2: price2.toFixed(4),
-                                    profitPercent: profitPercent.toFixed(2),
-                                    fundingRate: fundingRate
-                                });
-                            }
+                        price1 = parseFloat(price1);
+                        price2 = parseFloat(price2);
+
+                        if (!isNaN(price1) && !isNaN(price2)) {
+                            const spread = Math.abs(price1 - price2);
+                            const profitPercent = ((price2 - price1) / price1) * 100;
+                            const fundingRate = (Math.random() * 0.05).toFixed(4);
+
+                            newComparisons.push({
+                                symbol,
+                                exchange1,
+                                exchange2,
+                                price1: price1.toFixed(4),
+                                price2: price2.toFixed(4),
+                                profitPercent: profitPercent.toFixed(2),
+                                spread: spread.toFixed(4),
+                                fundingRate
+                            });
                         }
                     });
-                }
-            }
+                });
+            });
+
             setComparisonData(newComparisons);
         };
 
         generateComparisons();
     }, [selectedExchanges, prices]);
 
+    // 🔄 Filtrando os resultados com a barra de busca
     const filteredComparisons = comparisonData.filter(comp => {
         if (filter === "positive") return comp.fundingRate > 0;
         if (filter === "negative") return comp.fundingRate < 0;
         if (filter === "profit") return comp.profitPercent > 0;
-        return true;
+        return comp.symbol.toLowerCase().includes(searchTerm.toLowerCase());
+    });
+
+    // 🔄 Ordenação dos resultados
+    const sortedComparisons = [...filteredComparisons].sort((a, b) => {
+        if (sortOption === "profit-desc") return b.profitPercent - a.profitPercent;
+        if (sortOption === "profit-asc") return a.profitPercent - b.profitPercent;
+        if (sortOption === "spread-desc") return b.spread - a.spread;
+        if (sortOption === "spread-asc") return a.spread - b.spread;
+        return 0;
     });
 
     return (
         <Layout>
             <div className="market-analysis-container">
-                <div className="animated-background">
-                    <div className="animated-lines">
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                    </div>
-                </div>
-                
                 <h2>Análise de Mercado</h2>
                 <p>Compare os preços das criptomoedas entre diferentes corretoras.</p>
 
+                {/* 🔥 Seleção de Exchanges */}
                 <div className="exchange-box">
                     <h3>Selecione suas exchanges favoritas</h3>
                     <div className="exchange-filter">
@@ -120,36 +167,56 @@ const MarketAnalysis = () => {
                     </div>
                 </div>
 
-                <div className="filter-box">
-                    <h3>Filtrar Comparações</h3>
-                    <div className="filter-buttons">
-                        <button className={`filter-button ${filter === "all" ? "active" : ""}`} onClick={() => setFilter("all")}>Todas</button>
-                        <button className={`filter-button ${filter === "profit" ? "active" : ""}`} onClick={() => setFilter("profit")}>Maior Lucro</button>
-                        <button className={`filter-button ${filter === "positive" ? "active" : ""}`} onClick={() => setFilter("positive")}>Taxa +</button>
-                        <button className={`filter-button ${filter === "negative" ? "active" : ""}`} onClick={() => setFilter("negative")}>Taxa -</button>
-                    </div>
+                {/* 🔥 Barra de Busca e Filtros */}
+                <div className="search-filter-container">
+                    <input
+                        type="text"
+                        placeholder="🔍 Buscar moeda..."
+                        className="search-input"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                    <select
+                        className="search-input"
+                        value={filter}
+                        onChange={(e) => setFilter(e.target.value)}
+                    >
+                        <option value="all">Todas</option>
+                        <option value="profit">Maior Lucro</option>
+                        <option value="positive">Taxa +</option>
+                        <option value="negative">Taxa -</option>
+                    </select>
+                    <select
+                        className="search-input"
+                        value={sortOption}
+                        onChange={(e) => setSortOption(e.target.value)}
+                    >
+                        <option value="">Ordenar por...</option>
+                        <option value="profit-desc">Lucro: Maior → Menor</option>
+                        <option value="profit-asc">Lucro: Menor → Maior</option>
+                        <option value="spread-desc">Spread: Maior → Menor</option>
+                        <option value="spread-asc">Spread: Menor → Maior</option>
+                    </select>
                 </div>
 
+                {/* 🔄 Exibição dos resultados */}
                 {loading ? (
                     <p>Carregando dados...</p>
                 ) : (
                     <div className="comparisons-container">
-                        {filteredComparisons.length > 0 ? (
-                            filteredComparisons.map((comp, index) => (
+                        {sortedComparisons.length > 0 ? (
+                            sortedComparisons.map((comp, index) => (
                                 <div key={index} className="comparison-card">
                                     <h3>{comp.symbol}</h3>
                                     <p><b>{comp.exchange1}</b>: ${comp.price1}</p>
                                     <p><b>{comp.exchange2}</b>: ${comp.price2}</p>
-                                    <p className={`profit ${comp.profitPercent >= 0 ? "positive" : "negative"}`}>
-                                        Lucro: {comp.profitPercent}%
-                                    </p>
-                                    <p className={`funding-rate ${comp.fundingRate >= 0 ? "positive" : "negative"}`}>
-                                        Taxa: {comp.fundingRate}%
-                                    </p>
+                                    <p>Lucro: {comp.profitPercent}%</p>
+                                    <p>Spread: ${comp.spread}</p>
+                                    <p>Taxa: {comp.fundingRate}%</p>
                                 </div>
                             ))
                         ) : (
-                            <p>Nenhuma comparação disponível. Selecione pelo menos 2 exchanges.</p>
+                            <p>Nenhuma comparação disponível.</p>
                         )}
                     </div>
                 )}
