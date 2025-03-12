@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Layout from "../components/Layout";
+import CryptoBackground from "../components/CryptoBackground";
 import axios from "axios";
 import "./MarketAnalysis.css";
 
@@ -16,7 +17,6 @@ const MarketAnalysis = () => {
     const [loading, setLoading] = useState(true);
     const [selectedExchanges, setSelectedExchanges] = useState(exchanges.map(e => e.name));
     const [comparisonData, setComparisonData] = useState([]);
-    const [filter, setFilter] = useState("all");
     const [searchTerm, setSearchTerm] = useState("");
     const [sortOption, setSortOption] = useState("");
 
@@ -29,33 +29,18 @@ const MarketAnalysis = () => {
                     return;
                 }
 
-                const responses = await Promise.all([
-                    axios.get("http://localhost:5000/api/binance/prices", {
-                        headers: { Authorization: `Bearer ${token}` }
-                    }),
-                    axios.get("http://localhost:5000/api/bitget/prices", {
-                        headers: { Authorization: `Bearer ${token}` }
-                    }),
-                    axios.get("http://localhost:5000/api/gateio/prices", {
-                        headers: { Authorization: `Bearer ${token}` }
-                    }),
-                    axios.get("http://localhost:5000/api/kucoin/prices", {
-                        headers: { Authorization: `Bearer ${token}` }
-                    }),
-                    axios.get("http://localhost:5000/api/mexc/prices", {
-                        headers: { Authorization: `Bearer ${token}` }
-                    })
-                ]);
+                const responses = await Promise.all(
+                    exchanges.map(exchange =>
+                        axios.get(`http://localhost:5000/api/${exchange.name.toLowerCase()}/prices`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                        }).catch(() => ({ data: [] }))
+                    )
+                );
 
-                const formattedPrices = {
-                    Binance: responses[0].data,
-                    Bitget: responses[1].data,
-                    "Gate.io": responses[2].data,
-                    KuCoin: responses[3].data,
-                    MEXC: responses[4].data
-                };
-
-                console.log("✅ Dados carregados com sucesso:", formattedPrices);
+                const formattedPrices = exchanges.reduce((acc, exchange, index) => {
+                    acc[exchange.name] = responses[index].data;
+                    return acc;
+                }, {});
 
                 setPrices(formattedPrices);
                 setLoading(false);
@@ -66,7 +51,6 @@ const MarketAnalysis = () => {
 
         fetchPrices();
         const interval = setInterval(fetchPrices, 5000);
-
         return () => clearInterval(interval);
     }, []);
 
@@ -79,60 +63,50 @@ const MarketAnalysis = () => {
     useEffect(() => {
         if (selectedExchanges.length < 2 || Object.keys(prices).length === 0) return;
 
-        const generateComparisons = () => {
-            const newComparisons = [];
-            const symbols = new Set();
+        const newComparisons = [];
+        const symbols = new Set();
 
-            Object.values(prices).forEach(exchangePrices => {
-                exchangePrices.forEach(crypto => {
-                    symbols.add(crypto.symbol);
-                });
-            });
+        Object.values(prices).forEach(exchangePrices => {
+            exchangePrices.forEach(crypto => symbols.add(crypto.symbol));
+        });
 
-            symbols.forEach(symbol => {
-                selectedExchanges.forEach((exchange1, i) => {
-                    selectedExchanges.slice(i + 1).forEach(exchange2 => {
-                        let price1 = prices[exchange1]?.find(c => c.symbol === symbol)?.price;
-                        let price2 = prices[exchange2]?.find(c => c.symbol === symbol)?.price;
+        symbols.forEach(symbol => {
+            selectedExchanges.forEach((exchange1, i) => {
+                selectedExchanges.slice(i + 1).forEach(exchange2 => {
+                    let price1 = parseFloat(prices[exchange1]?.find(c => c.symbol === symbol)?.price);
+                    let price2 = parseFloat(prices[exchange2]?.find(c => c.symbol === symbol)?.price);
 
-                        price1 = parseFloat(price1);
-                        price2 = parseFloat(price2);
+                    if (!isNaN(price1) && !isNaN(price2) && price1 > 0 && price2 > 0) {
+                        const maxPrice = Math.max(price1, price2);
+                        const minPrice = Math.min(price1, price2);
+                        const spread = Math.abs(price1 - price2);
+                        const profitPercent = ((maxPrice / minPrice) - 1) * 100;
+                        const fundingRate = (Math.random() * 0.05).toFixed(4);
 
-                        if (!isNaN(price1) && !isNaN(price2)) {
-                            const spread = Math.abs(price1 - price2);
-                            const profitPercent = ((price2 - price1) / price1) * 100;
-                            const fundingRate = (Math.random() * 0.05).toFixed(4);
-
+                        if (profitPercent > 0) {
                             newComparisons.push({
                                 symbol,
                                 exchange1,
                                 exchange2,
-                                price1: price1.toFixed(4),
-                                price2: price2.toFixed(4),
+                                price1,
+                                price2,
                                 profitPercent: profitPercent.toFixed(2),
-                                spread: spread.toFixed(4),
+                                spread: spread.toFixed(8),
                                 fundingRate
                             });
                         }
-                    });
+                    }
                 });
             });
+        });
 
-            setComparisonData(newComparisons);
-        };
-
-        generateComparisons();
+        setComparisonData(newComparisons);
     }, [selectedExchanges, prices]);
 
-    // 🔄 Filtrando os resultados com a barra de busca
-    const filteredComparisons = comparisonData.filter(comp => {
-        if (filter === "positive") return comp.fundingRate > 0;
-        if (filter === "negative") return comp.fundingRate < 0;
-        if (filter === "profit") return comp.profitPercent > 0;
-        return comp.symbol.toLowerCase().includes(searchTerm.toLowerCase());
-    });
+    const filteredComparisons = comparisonData.filter(comp =>
+        comp.symbol.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
-    // 🔄 Ordenação dos resultados
     const sortedComparisons = [...filteredComparisons].sort((a, b) => {
         if (sortOption === "profit-desc") return b.profitPercent - a.profitPercent;
         if (sortOption === "profit-asc") return a.profitPercent - b.profitPercent;
@@ -141,13 +115,37 @@ const MarketAnalysis = () => {
         return 0;
     });
 
+    const formatPrice = (price) => {
+        price = Number(price);
+        if (isNaN(price) || price === 0) return "$0.00";
+
+        if (price >= 0.01) return `$${price.toFixed(8)}`; 
+
+        let strPrice = price.toFixed(12); 
+        let match = strPrice.match(/0\.0+(?!0)/); 
+
+        if (match) {
+            let zeroCount = match[0].length - 2; 
+            let significantPart = strPrice.slice(match[0].length); 
+
+            if (zeroCount > 8) { 
+                return `$0.0{${zeroCount}}${significantPart.slice(0, 2)}`;
+            } else { 
+                return `$${price.toFixed(8)}`; 
+            }
+        }
+
+        return `$${price.toFixed(8)}`;
+    };
+
     return (
         <Layout>
+            <CryptoBackground />
+
             <div className="market-analysis-container">
                 <h2>Análise de Mercado</h2>
                 <p>Compare os preços das criptomoedas entre diferentes corretoras.</p>
 
-                {/* 🔥 Seleção de Exchanges */}
                 <div className="exchange-box">
                     <h3>Selecione suas exchanges favoritas</h3>
                     <div className="exchange-filter">
@@ -167,7 +165,6 @@ const MarketAnalysis = () => {
                     </div>
                 </div>
 
-                {/* 🔥 Barra de Busca e Filtros */}
                 <div className="search-filter-container">
                     <input
                         type="text"
@@ -176,22 +173,8 @@ const MarketAnalysis = () => {
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
-                    <select
-                        className="search-input"
-                        value={filter}
-                        onChange={(e) => setFilter(e.target.value)}
-                    >
-                        <option value="all">Todas</option>
-                        <option value="profit">Maior Lucro</option>
-                        <option value="positive">Taxa +</option>
-                        <option value="negative">Taxa -</option>
-                    </select>
-                    <select
-                        className="search-input"
-                        value={sortOption}
-                        onChange={(e) => setSortOption(e.target.value)}
-                    >
-                        <option value="">Ordenar por...</option>
+                    <select className="search-input" value={sortOption} onChange={(e) => setSortOption(e.target.value)}>
+                        <option value="" disabled hidden>Ordenar por</option>
                         <option value="profit-desc">Lucro: Maior → Menor</option>
                         <option value="profit-asc">Lucro: Menor → Maior</option>
                         <option value="spread-desc">Spread: Maior → Menor</option>
@@ -199,27 +182,18 @@ const MarketAnalysis = () => {
                     </select>
                 </div>
 
-                {/* 🔄 Exibição dos resultados */}
-                {loading ? (
-                    <p>Carregando dados...</p>
-                ) : (
-                    <div className="comparisons-container">
-                        {sortedComparisons.length > 0 ? (
-                            sortedComparisons.map((comp, index) => (
-                                <div key={index} className="comparison-card">
-                                    <h3>{comp.symbol}</h3>
-                                    <p><b>{comp.exchange1}</b>: ${comp.price1}</p>
-                                    <p><b>{comp.exchange2}</b>: ${comp.price2}</p>
-                                    <p>Lucro: {comp.profitPercent}%</p>
-                                    <p>Spread: ${comp.spread}</p>
-                                    <p>Taxa: {comp.fundingRate}%</p>
-                                </div>
-                            ))
-                        ) : (
-                            <p>Nenhuma comparação disponível.</p>
-                        )}
-                    </div>
-                )}
+                <div className="comparisons-container">
+                    {sortedComparisons.map((comp, index) => (
+                        <div key={index} className="comparison-card">
+                            <h3>{comp.symbol}</h3>
+                            <p><b>{comp.exchange1}</b>: {formatPrice(comp.price1)}</p>
+                            <p><b>{comp.exchange2}</b>: {formatPrice(comp.price2)}</p>
+                            <p>Lucro: {comp.profitPercent}%</p>
+                            <p>Spread: {formatPrice(comp.spread)}</p>
+                            <p>Taxa: {comp.fundingRate}%</p>
+                        </div>
+                    ))}
+                </div>
             </div>
         </Layout>
     );
