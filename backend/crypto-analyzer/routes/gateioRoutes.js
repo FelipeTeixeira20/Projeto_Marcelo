@@ -1,35 +1,34 @@
 const express = require('express');
-const { getCryptoPrice } = require('../services/gateioService');
+const axios = require('axios');
 
 const router = express.Router();
+const GATEIO_API_URL = "https://api.gateio.ws/api/v4/spot";
+const GATEIO_FUTURES_API_URL = "https://api.gateio.ws/api/v4/futures/usdt";
 
-// Rota para buscar preços de todas as criptomoedas na Gate.io
-router.get('/prices', async (req, res) => {
+// 🔹 Teste da API Gate.io
+router.get('/', (req, res) => {
+    res.json({ message: "API da Gate.io funcionando! Use /spot/prices ou /futures/prices." });
+});
+
+// 🔹 Preços Spot
+router.get('/spot/prices', async (req, res) => {
     try {
-        const prices = await getCryptoPrice();
-        if (!prices || prices.length === 0) {
-            return res.status(404).json({ error: "Nenhuma moeda encontrada" });
-        }
-
-        res.json(prices);
+        const response = await axios.get(`${GATEIO_API_URL}/tickers`);
+        res.json(response.data);
     } catch (error) {
-        console.error("Erro ao buscar preços da Gate.io:", error.message);
-        res.status(500).json({ error: "Erro ao obter preços da Gate.io" });
+        console.error("❌ Erro ao buscar preços Spot da Gate.io:", error.message);
+        res.status(500).json({ error: "Erro ao obter preços Spot da Gate.io" });
     }
 });
 
-// Rota para buscar um símbolo específico na Gate.io
-router.get('/prices/:symbol', async (req, res) => {
+// 🔹 Preços Futures
+router.get('/futures/prices', async (req, res) => {
     try {
-        const { symbol } = req.params;
-        const price = await getCryptoPrice(symbol);
-        if (!price) {
-            return res.status(404).json({ error: "Moeda não encontrada" });
-        }
-
-        res.json(price);
+        const response = await axios.get(`${GATEIO_FUTURES_API_URL}/tickers`);
+        res.json(response.data);
     } catch (error) {
-        res.status(500).json({ error: "Erro ao obter dados da Gate.io" });
+        console.error("❌ Erro ao buscar preços Futures da Gate.io:", error.message);
+        res.status(500).json({ error: "Erro ao obter preços Futures da Gate.io" });
     }
 });
 

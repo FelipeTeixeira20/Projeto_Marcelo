@@ -1,36 +1,42 @@
 const express = require('express');
-const { getCryptoPrice } = require('../services/bitgetService');
+const axios = require('axios');
 
 const router = express.Router();
+const BITGET_API_URL = "https://api.bitget.com/api/v2";
+const BITGET_FUTURES_API_URL = "https://api.bitget.com/api/mix/v1";
 
-// Rota para buscar preços de todas as criptomoedas na Bitget
-router.get('/prices', async (req, res) => {
+// 🔹 Teste da API Bitget
+router.get('/', (req, res) => {
+    res.json({ message: "API da Bitget funcionando! Use /spot/prices ou /futures/prices." });
+});
+
+// 🔹 Preços Spot
+router.get('/spot/prices', async (req, res) => {
     try {
-        const prices = await getCryptoPrice();
-        if (!prices || prices.length === 0) {
-            return res.status(404).json({ error: "Nenhuma moeda encontrada" });
+        const response = await axios.get(`${BITGET_API_URL}/market/tickers`);
+        if (response.data && response.data.data) {
+            res.json(response.data.data);
+        } else {
+            throw new Error("Dados inválidos recebidos da API Spot");
         }
-
-        // Enviar a resposta no formato padronizado
-        res.json(prices);
     } catch (error) {
-        console.error("Erro ao buscar preços da Bitget:", error.message);
-        res.status(500).json({ error: "Erro ao obter preços da Bitget" });
+        console.error("❌ Erro ao buscar preços Spot da Bitget:", error.message);
+        res.status(500).json({ error: "Erro ao obter preços Spot da Bitget" });
     }
 });
 
-// Rota para buscar um símbolo específico na Bitget
-router.get('/prices/:symbol', async (req, res) => {
+// 🔹 Preços Futures (Corrigido)
+router.get('/futures/prices', async (req, res) => {
     try {
-        const { symbol } = req.params;
-        const price = await getCryptoPrice(symbol);
-        if (!price) {
-            return res.status(404).json({ error: "Moeda não encontrada" });
+        const response = await axios.get(`${BITGET_FUTURES_API_URL}/market/tickers?productType=umcbl`);
+        if (response.data && response.data.data) {
+            res.json(response.data.data);
+        } else {
+            throw new Error("Dados inválidos recebidos da API Futures");
         }
-
-        res.json(price);
     } catch (error) {
-        res.status(500).json({ error: "Erro ao obter dados da Bitget" });
+        console.error("❌ Erro ao buscar preços Futures da Bitget:", error.message);
+        res.status(500).json({ error: "Erro ao obter preços Futures da Bitget" });
     }
 });
 

@@ -30,17 +30,24 @@ const MarketAnalysis = () => {
                 }
 
                 const responses = await Promise.all(
-                    exchanges.map(exchange =>
-                        axios.get(`http://localhost:5000/api/${exchange.name.toLowerCase()}/prices`, {
-                            headers: { Authorization: `Bearer ${token}` }
-                        }).catch(() => ({ data: [] }))
+                    exchanges.flatMap(exchange =>
+                        ["spot", "futures"].map(marketType =>
+                            axios
+                                .get(`http://localhost:5000/api/${exchange.name.toLowerCase()}/${marketType}/prices`, {
+                                    headers: { Authorization: `Bearer ${token}` }
+                                })
+                                .catch(() => ({ data: [] }))
+                        )
                     )
                 );
 
-                const formattedPrices = exchanges.reduce((acc, exchange, index) => {
-                    acc[exchange.name] = responses[index].data;
-                    return acc;
-                }, {});
+                const formattedPrices = {};
+                exchanges.forEach((exchange, index) => {
+                    formattedPrices[exchange.name] = {
+                        spot: responses[index * 2].data,
+                        futures: responses[index * 2 + 1].data,
+                    };
+                });
 
                 setPrices(formattedPrices);
                 setLoading(false);
@@ -61,40 +68,55 @@ const MarketAnalysis = () => {
     };
 
     useEffect(() => {
-        if (selectedExchanges.length < 2 || Object.keys(prices).length === 0) return;
+        if (selectedExchanges.length === 0 || Object.keys(prices).length === 0) return;
 
         const newComparisons = [];
         const symbols = new Set();
 
-        Object.values(prices).forEach(exchangePrices => {
-            exchangePrices.forEach(crypto => symbols.add(crypto.symbol));
+        Object.values(prices).forEach(market => {
+            [...market.spot, ...market.futures].forEach(crypto => symbols.add(crypto.symbol));
         });
 
         symbols.forEach(symbol => {
-            selectedExchanges.forEach((exchange1, i) => {
-                selectedExchanges.slice(i + 1).forEach(exchange2 => {
-                    let price1 = parseFloat(prices[exchange1]?.find(c => c.symbol === symbol)?.price);
-                    let price2 = parseFloat(prices[exchange2]?.find(c => c.symbol === symbol)?.price);
+            selectedExchanges.forEach(exchange1 => {
+                selectedExchanges.forEach(exchange2 => {
+                    if (exchange1 !== exchange2) {
+                        let priceSpot1 = parseFloat(prices[exchange1]?.spot?.find(c => c.symbol === symbol)?.price);
+                        let priceFutures2 = parseFloat(prices[exchange2]?.futures?.find(c => c.symbol === symbol)?.price);
+                        let priceFutures1 = parseFloat(prices[exchange1]?.futures?.find(c => c.symbol === symbol)?.price);
+                        let priceSpot2 = parseFloat(prices[exchange2]?.spot?.find(c => c.symbol === symbol)?.price);
 
-                    if (!isNaN(price1) && !isNaN(price2) && price1 > 0 && price2 > 0) {
-                        const maxPrice = Math.max(price1, price2);
-                        const minPrice = Math.min(price1, price2);
-                        const spread = Math.abs(price1 - price2);
-                        const profitPercent = ((maxPrice / minPrice) - 1) * 100;
-                        const fundingRate = (Math.random() * 0.05).toFixed(4);
+                        let feeSpot1 = parseFloat(prices[exchange1]?.spot?.find(c => c.symbol === symbol)?.fee) || 0;
+                        let feeFutures2 = parseFloat(prices[exchange2]?.futures?.find(c => c.symbol === symbol)?.fee) || 0;
+                        let feeFutures1 = parseFloat(prices[exchange1]?.futures?.find(c => c.symbol === symbol)?.fee) || 0;
+                        let feeSpot2 = parseFloat(prices[exchange2]?.spot?.find(c => c.symbol === symbol)?.fee) || 0;
 
-                        if (profitPercent > 0) {
-                            newComparisons.push({
-                                symbol,
-                                exchange1,
-                                exchange2,
-                                price1,
-                                price2,
-                                profitPercent: profitPercent.toFixed(2),
-                                spread: spread.toFixed(8),
-                                fundingRate
-                            });
-                        }
+                        const addComparison = (exchangeA, exchangeB, priceA, priceB, feeA, feeB) => {
+                            if (!isNaN(priceA) && !isNaN(priceB) && priceA > 0 && priceB > 0) {
+                                const maxPrice = Math.max(priceA, priceB);
+                                const minPrice = Math.min(priceA, priceB);
+                                const spread = Math.abs(priceA - priceB);
+                                const profitPercent = ((maxPrice / minPrice) - 1) * 100;
+
+                                if (profitPercent > 0) {
+                                    newComparisons.push({
+                                        symbol,
+                                        exchangeA,
+                                        exchangeB,
+                                        priceA,
+                                        priceB,
+                                        profitPercent: profitPercent.toFixed(2),
+                                        spread: spread.toFixed(8),
+                                        feeA: feeA.toFixed(4),
+                                        feeB: feeB.toFixed(4)
+                                    });
+                                }
+                            }
+                        };
+
+                        addComparison(exchange1 + " Spot", exchange2 + " Futures", priceSpot1, priceFutures2, feeSpot1, feeFutures2);
+                        addComparison(exchange1 + " Futures", exchange2 + " Spot", priceFutures1, priceSpot2, feeFutures1, feeSpot2);
+                        addComparison(exchange1 + " Spot", exchange1 + " Futures", priceSpot1, priceFutures1, feeSpot1, feeFutures1);
                     }
                 });
             });
@@ -114,29 +136,6 @@ const MarketAnalysis = () => {
         if (sortOption === "spread-asc") return a.spread - b.spread;
         return 0;
     });
-
-    const formatPrice = (price) => {
-        price = Number(price);
-        if (isNaN(price) || price === 0) return "$0.00";
-
-        if (price >= 0.01) return `$${price.toFixed(8)}`; 
-
-        let strPrice = price.toFixed(12); 
-        let match = strPrice.match(/0\.0+(?!0)/); 
-
-        if (match) {
-            let zeroCount = match[0].length - 2; 
-            let significantPart = strPrice.slice(match[0].length); 
-
-            if (zeroCount > 8) { 
-                return `$0.0{${zeroCount}}${significantPart.slice(0, 2)}`;
-            } else { 
-                return `$${price.toFixed(8)}`; 
-            }
-        }
-
-        return `$${price.toFixed(8)}`;
-    };
 
     return (
         <Layout>
@@ -166,13 +165,8 @@ const MarketAnalysis = () => {
                 </div>
 
                 <div className="search-filter-container">
-                    <input
-                        type="text"
-                        placeholder="🔍 Buscar moeda..."
-                        className="search-input"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                    <input type="text" placeholder="🔍 Buscar moeda..." className="search-input"
+                        value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                     <select className="search-input" value={sortOption} onChange={(e) => setSortOption(e.target.value)}>
                         <option value="" disabled hidden>Ordenar por</option>
                         <option value="profit-desc">Lucro: Maior → Menor</option>
@@ -186,11 +180,11 @@ const MarketAnalysis = () => {
                     {sortedComparisons.map((comp, index) => (
                         <div key={index} className="comparison-card">
                             <h3>{comp.symbol}</h3>
-                            <p><b>{comp.exchange1}</b>: {formatPrice(comp.price1)}</p>
-                            <p><b>{comp.exchange2}</b>: {formatPrice(comp.price2)}</p>
+                            <p>{comp.exchangeA}: ${comp.priceA}</p>
+                            <p>{comp.exchangeB}: ${comp.priceB}</p>
                             <p>Lucro: {comp.profitPercent}%</p>
-                            <p>Spread: {formatPrice(comp.spread)}</p>
-                            <p>Taxa: {comp.fundingRate}%</p>
+                            <p>Spread: ${comp.spread}</p>
+                            <p>Taxa A: {comp.feeA}% | Taxa B: {comp.feeB}%</p>
                         </div>
                     ))}
                 </div>
