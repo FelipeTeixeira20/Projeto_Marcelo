@@ -84,34 +84,95 @@ let updateInterval = null;
 // Log de IPs conectados
 const connectedClients = new Set();
 
-// Função para buscar preços da MEXC
+// Função para buscar preços de todas as corretoras
 async function fetchPrices() {
   try {
-    const response = await axios.get(
-      "https://api.mexc.com/api/v3/ticker/price"
-    );
-    if (response.data && Array.isArray(response.data)) {
-      lastPrices = response.data;
-      return response.data;
+    // Array para armazenar todos os dados de todas as corretoras
+    let allPrices = [];
+
+    // Lista de corretoras e suas URLs
+    const exchanges = [
+      {
+        id: "mexc",
+        name: "MEXC",
+        url: "https://api.mexc.com/api/v3/ticker/price",
+      },
+      {
+        id: "binance",
+        name: "Binance",
+        url: "https://api.binance.com/api/v3/ticker/price",
+      },
+      // As outras corretoras serão buscadas via nossa própria API para não complicar muito
+    ];
+
+    // Buscar dados de cada corretora externa diretamente
+    for (const exchange of exchanges) {
+      try {
+        console.log(`Buscando dados da ${exchange.name}...`);
+        const response = await axios.get(exchange.url, { timeout: 5000 });
+
+        if (response.data && Array.isArray(response.data)) {
+          // Adicionar tags de exchange a cada item
+          const taggedData = response.data.map((item) => ({
+            ...item,
+            exchangeId: exchange.id,
+            exchangeName: exchange.name,
+          }));
+
+          console.log(
+            `✅ Recebidos ${taggedData.length} itens da ${exchange.name}`
+          );
+          allPrices = [...allPrices, ...taggedData];
+        }
+      } catch (exchangeError) {
+        console.error(
+          `Erro ao buscar preços da ${exchange.name}:`,
+          exchangeError.message
+        );
+      }
     }
-    throw new Error("Dados inválidos recebidos da API");
+
+    // Buscar dados das outras corretoras através da nossa própria API
+    // (isso é uma simplificação - em um ambiente de produção real,
+    // você precisaria buscar diretamente das APIs das corretoras)
+    try {
+      const internalResponse = await axios.get(
+        "http://localhost:5000/api/binance/spot/prices"
+      );
+      if (internalResponse.data && Array.isArray(internalResponse.data)) {
+        allPrices = [...allPrices, ...internalResponse.data];
+      }
+    } catch (internalError) {
+      console.error("Erro ao buscar dados internos:", internalError.message);
+    }
+
+    // Se não conseguimos dados de nenhuma corretora, retornar null
+    if (allPrices.length === 0) {
+      throw new Error("Não foi possível obter dados de nenhuma corretora");
+    }
+
+    console.log(`Total de preços coletados: ${allPrices.length}`);
+    lastPrices = allPrices;
+    return allPrices;
   } catch (error) {
-    console.error("Erro ao buscar preços da MEXC:", error.message);
+    console.error("Erro ao buscar preços das corretoras:", error.message);
     return null;
   }
 }
 
-// Função para enviar dados para todos os clientes
-function broadcast(data) {
+// Função para enviar dados aos clientes
+function broadcastData(data) {
   if (!data) return;
 
-  wss.clients.forEach((client) => {
+  connectedClients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
       try {
-        const message = JSON.stringify(data);
-        client.send(message);
+        client.send(JSON.stringify(data));
       } catch (error) {
-        console.error("Erro ao enviar dados para cliente:", error.message);
+        console.error(
+          "Erro ao enviar dados para cliente WebSocket:",
+          error.message
+        );
       }
     }
   });
@@ -126,54 +187,48 @@ function startPriceUpdates() {
   updateInterval = setInterval(async () => {
     const prices = await fetchPrices();
     if (prices) {
-      broadcast(prices);
+      broadcastData(prices);
     }
   }, 2000);
 }
 
-// Configuração dos eventos do WebSocket
-wss.on("connection", async (ws, req) => {
-  const clientIP = req.socket.remoteAddress;
-  connectedClients.add(clientIP);
-  console.log(`Nova conexão WebSocket estabelecida de ${clientIP}`);
-  console.log(
-    `Clientes conectados: ${Array.from(connectedClients).join(", ")}`
-  );
+// Iniciar o servidor WebSocket
+wss.on("connection", (ws) => {
+  console.log("Cliente WebSocket conectado");
+  connectedClients.add(ws);
 
-  // Envia dados iniciais para o novo cliente
-  const initialPrices = lastPrices || (await fetchPrices());
-  if (initialPrices) {
+  // Enviar dados iniciais ao cliente que acabou de se conectar
+  if (lastPrices && lastPrices.length > 0) {
     try {
-      ws.send(JSON.stringify(initialPrices));
+      ws.send(JSON.stringify(lastPrices));
+      console.log(
+        `Enviados ${lastPrices.length} preços iniciais para o novo cliente`
+      );
     } catch (error) {
-      console.error("Erro ao enviar dados iniciais:", error.message);
+      console.error(
+        "Erro ao enviar dados iniciais para novo cliente:",
+        error.message
+      );
     }
   }
 
-  // Configuração do ping para manter a conexão ativa
+  // Configurar ping para manter a conexão viva
   const pingInterval = setInterval(() => {
     if (ws.readyState === WebSocket.OPEN) {
       ws.ping();
     }
   }, 30000);
 
-  // Tratamento de erros e fechamento
-  ws.on("error", (error) => {
-    console.error("Erro na conexão WebSocket:", error.message);
-  });
-
   ws.on("close", () => {
-    connectedClients.delete(clientIP);
-    console.log(`Cliente ${clientIP} desconectado`);
-    console.log(
-      `Clientes restantes: ${Array.from(connectedClients).join(", ")}`
-    );
+    console.log("Cliente WebSocket desconectado");
+    connectedClients.delete(ws);
     clearInterval(pingInterval);
   });
 
-  ws.on("pong", () => {
-    // Cliente respondeu ao ping, conexão está ativa
-    ws.isAlive = true;
+  ws.on("error", (error) => {
+    console.error("Erro na conexão WebSocket:", error.message);
+    connectedClients.delete(ws);
+    clearInterval(pingInterval);
   });
 });
 
