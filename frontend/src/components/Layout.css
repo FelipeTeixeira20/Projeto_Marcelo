@@ -1,29 +1,28 @@
 .layout {
-    display: flex;
-    height: 100vh;
-  }
-  
-  .sidebar {
-    width: 60px;
-    transition: width 0.3s ease-in-out;
-  }
-  
-  .sidebar.open {
-    width: 200px;
-  }
-  
-  .main-content {
-    flex-grow: 1;
-    margin-left: 60px;
-    transition: margin-left 0.3s ease-in-out;
-  }
-  
-  .sidebar.open + .main-content {
-    margin-left: 200px;
-  }
-  
-  .page-content {
-    padding: 20px;
-    margin-top: 60px;
-  }
-  
+  display: flex;
+  height: 100vh;
+}
+
+.sidebar {
+  width: 60px;
+  transition: width 0.3s ease-in-out;
+}
+
+.sidebar.open {
+  width: 200px;
+}
+
+.main-content {
+  flex-grow: 1;
+  margin-left: 60px;
+  transition: margin-left 0.3s ease-in-out;
+}
+
+.sidebar.open + .main-content {
+  margin-left: 200px;
+}
+
+.page-content {
+  padding: 20px;
+  margin-top: 60px;
+}
