@@ -1,0 +1,141 @@
+/* Adicione estas classes para animação suave de mudança de valores */
+.table-container td {
+  transition: background-color 0.3s ease;
+}
+
+.value-changed {
+  animation: highlight 1s ease;
+}
+
+@keyframes highlight {
+  0% {
+    background-color: rgba(0, 255, 0, 0.2);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+/* Para os valores numéricos que mudam */
+.number-value {
+  transition: color 0.3s ease;
+}
+
+.loading-cell,
+.no-data-cell {
+  text-align: center;
+  padding: 20px;
+}
+
+/* Estilo para células com valores */
+td {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Adicione estas regras adicionais */
+
+.footer-note {
+  text-align: center;
+  margin-top: 20px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+}
+
+.footer-note p {
+  margin: 5px 0;
+}
+
+.table-container {
+  position: relative;
+  margin-top: 20px;
+  overflow-x: auto;
+  max-height: calc(100vh - 250px);
+  overflow-y: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  position: relative;
+  min-width: 1200px; /* Garante largura mínima para todas as colunas */
+}
+
+thead th {
+  position: sticky;
+  top: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 10;
+  padding: 10px;
+  text-align: left;
+  color: #ffffff;
+  border-bottom: 2px solid #444;
+}
+
+tbody td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #333;
+  color: #ffffff;
+  transition: background-color 0.3s ease;
+}
+
+tbody tr:hover {
+  background-color: rgba(0, 128, 0, 0.2);
+}
+
+.number-value {
+  font-family: "Roboto Mono", monospace;
+  text-align: right;
+}
+
+.loading-cell,
+.no-data-cell {
+  text-align: center;
+  padding: 20px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Adicionar estilo para mostrar melhor a coluna Exchange */
+td:nth-child(3) {
+  text-align: center;
+  color: #88ff88;
+}
+
+/* Adicionar efeito de mudança de preço */
+.value-up {
+  animation: flash-green 1s ease;
+}
+
+.value-down {
+  animation: flash-red 1s ease;
+}
+
+@keyframes flash-green {
+  0% {
+    background-color: rgba(0, 255, 0, 0.3);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+@keyframes flash-red {
+  0% {
+    background-color: rgba(255, 0, 0, 0.3);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+/* Estilização específica para algumas colunas */
+td:nth-child(6) {
+  /* Direção */
+  text-align: center;
+}
+
+td:nth-child(5) {
+  /* Lucro % */
+  font-weight: bold;
+  color: #88ff88;
+}
