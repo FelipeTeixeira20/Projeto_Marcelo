@@ -437,3 +437,214 @@ tr {
     font-size: 14px;
   }
 }
+
+.market-analysis-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.market-analysis-header h2 {
+  font-size: 24px;
+  color: #fff;
+  margin: 0;
+}
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 20px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.status-dot.connected {
+  background-color: #4caf50;
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+}
+
+.status-dot.disconnected {
+  background-color: #f44336;
+  box-shadow: 0 0 10px rgba(244, 67, 54, 0.5);
+}
+
+.filters-container {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.search-box {
+  width: 100%;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 16px;
+}
+
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.exchange-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.exchange-filter-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.exchange-filter-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.exchange-filter-btn.active {
+  background: #2196f3;
+  box-shadow: 0 0 10px rgba(33, 150, 243, 0.5);
+}
+
+.opportunities-container {
+  position: relative;
+}
+
+.opportunities-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.opportunity-card {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.opportunity-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.card-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #fff;
+}
+
+.profit {
+  padding: 4px 8px;
+  background: rgba(76, 175, 80, 0.2);
+  border-radius: 4px;
+  color: #4caf50;
+  font-weight: bold;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.exchange-info {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.exchange {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.exchange .label {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+  text-transform: capitalize;
+}
+
+.exchange .price {
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.type-badge {
+  align-self: flex-start;
+  padding: 4px 8px;
+  background: rgba(33, 150, 243, 0.2);
+  border-radius: 4px;
+  color: #2196f3;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.no-data {
+  text-align: center;
+  padding: 40px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 18px;
+}
+
+.load-more {
+  text-align: center;
+  padding: 20px;
+}
+
+@media (max-width: 768px) {
+  .market-analysis-container {
+    padding: 10px;
+  }
+
+  .opportunities-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .exchange-filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 10px;
+  }
+
+  .exchange-filter-btn {
+    white-space: nowrap;
+  }
+}
