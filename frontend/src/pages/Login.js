@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../components/Header';
 import './Login.css';
+import logo from '../assets/logo_arby.png'; // 👈 Logo adicionada
 
 const SERVER_URL = window.location.hostname === "192.168.100.26"
   ? "192.168.100.26"
@@ -18,7 +19,6 @@ const Login = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Verificar se existe um token salvo
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     if (token) {
       navigate('/dashboard');
@@ -45,7 +45,6 @@ const Login = () => {
 
       const { token } = response.data;
 
-      // Salvar o token e o username baseado na opção "lembrar-me"
       if (formData.rememberMe) {
         localStorage.setItem('token', token);
         localStorage.setItem('username', formData.username);
@@ -63,7 +62,31 @@ const Login = () => {
   return (
     <>
       <Header />
+
       <div className="login-container">
+        {/* 👇 Adicionando logo acima do modal, sem interferir no CSS existente */}
+        <div
+          style={{
+            position: 'absolute',
+            top: '150px', // ⬅️ Aumentado pra descer mais
+            display: 'flex',
+            justifyContent: 'center',
+            width: '100%',
+            zIndex: 1
+          }}
+        >
+          <img
+            src={logo}
+            alt="Logo ARBY"
+            style={{
+              width: '160px', // ⬅️ Aumentado
+              height: '160px',
+              objectFit: 'contain',
+              borderRadius: '16px',
+              filter: 'drop-shadow(0 0 3px rgba(255, 255, 255, 0.9))'
+            }}
+          />
+        </div>
         <div className="login-modal">
           <h1 className="login-title">Login</h1>
           <form onSubmit={handleSubmit}>
@@ -116,4 +139,4 @@ const Login = () => {
   );
 };
 
-export default Login; 
+export default Login;
