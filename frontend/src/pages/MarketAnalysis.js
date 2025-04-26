@@ -19,7 +19,7 @@ const SERVER_URL =
 
 const EXCHANGES = ["binance", "mexc", "bitget", "gateio", "kucoin"];
 const BATCH_SIZE = 50; // Número de oportunidades mostradas por vez
-const MIN_PROFIT = 0.3; // Lucro mínimo para mostrar oportunidade
+const MIN_PROFIT = 0.001; // Lucro mínimo para mostrar oportunidade
 
 const MarketAnalysis = () => {
   const [opportunities, setOpportunities] = useState([]);
@@ -78,19 +78,23 @@ const MarketAnalysis = () => {
   // Filtragem de oportunidades otimizada
   const filteredOpportunities = useMemo(() => {
     if (!searchTerm && selectedExchanges.length === 0) return [];
-
+  
     return opportunities
       .filter((opp) => {
+        const normalizedSearch = normalizeSymbol(searchTerm);
+        const normalizedSymbol = normalizeSymbol(opp.symbol);
+  
         const matchesSearch =
-          !searchTerm ||
-          opp.symbol.toLowerCase().includes(searchTerm.toLowerCase());
+          !searchTerm || normalizedSymbol.includes(normalizedSearch);
+  
         const matchesExchanges =
           selectedExchanges.includes(opp.exchange1) ||
           selectedExchanges.includes(opp.exchange2);
+  
         return matchesSearch && matchesExchanges;
       })
       .slice(0, visibleCount);
-  }, [opportunities, searchTerm, selectedExchanges, visibleCount]);
+  }, [opportunities, searchTerm, selectedExchanges, visibleCount, normalizeSymbol]);
 
   // Função para processar dados do WebSocket de forma otimizada
   const processWebSocketUpdate = useCallback(
@@ -190,26 +194,33 @@ const MarketAnalysis = () => {
           // Processa spot vs futures na mesma exchange
           if (exchange1 === exchange2) {
             data1.spot?.forEach((spotItem1) => {
-              const symbol = normalizeSymbol(spotItem1.symbol);
+              const normalizedSymbolSpot = normalizeSymbol(spotItem1.symbol);
 
               data1.futures?.forEach((futuresItem1) => {
-                if (normalizeSymbol(futuresItem1.symbol) === symbol) {
+                if (normalizeSymbol(futuresItem1.symbol) === normalizedSymbolSpot) {
+                  console.log("MATCH encontrado!", {
+                    corretora: exchange1,
+                    symbolSpot: spotItem1.symbol,
+                    priceSpot: spotItem1.price,
+                    symbolFutures: futuresItem1.symbol,
+                    priceFutures: futuresItem1.lastPrice,
+                  });
                   const profit = calculateProfit(
                     parseFloat(spotItem1.price),
-                    parseFloat(futuresItem1.price)
+                    parseFloat(futuresItem1.lastPrice)
                   );
 
                   if (profit >= MIN_PROFIT) {
-                    const id = `${exchange1}-${symbol}-sf`;
+                    const id = `${exchange1}-${normalizedSymbolSpot}-sf`;
                     if (!processedPairs.has(id)) {
                       opportunities.push({
                         id,
-                        symbol,
+                        symbol: normalizedSymbolSpot,
                         exchange1,
                         exchange2: exchange1,
                         type: "spot-futures",
                         price1: parseFloat(spotItem1.price),
-                        price2: parseFloat(futuresItem1.price),
+                        price2: parseFloat(futuresItem1.lastPrice),
                         profit,
                         timestamp: Date.now(),
                       });
@@ -224,26 +235,26 @@ const MarketAnalysis = () => {
           else {
             // Spot vs Spot entre exchanges
             data1.spot?.forEach((spotItem1) => {
-              const symbol = normalizeSymbol(spotItem1.symbol);
+              const normalizedSymbolSpot = normalizeSymbol(spotItem1.symbol);
 
               data2.spot?.forEach((spotItem2) => {
-                if (normalizeSymbol(spotItem2.symbol) === symbol) {
+                if (normalizeSymbol(spotItem2.symbol) === normalizedSymbolSpot) {
                   const profit = calculateProfit(
                     parseFloat(spotItem1.price),
                     parseFloat(spotItem2.price)
                   );
 
                   if (profit >= MIN_PROFIT) {
-                    const id = `${exchange1}-${exchange2}-${symbol}-ss`;
+                    const id = `${exchange1}-${exchange2}-${normalizedSymbolSpot}-ss`;
                     if (!processedPairs.has(id)) {
                       opportunities.push({
                         id,
-                        symbol,
+                        symbol: normalizedSymbolSpot,
                         exchange1,
                         exchange2,
                         type: "spot-spot",
                         price1: parseFloat(spotItem1.price),
-                        price2: parseFloat(spotItem2.price),
+                        price2: parseFloat(spotItem2.Price),
                         profit,
                         timestamp: Date.now(),
                       });
@@ -255,23 +266,23 @@ const MarketAnalysis = () => {
 
               // Spot vs Futures entre exchanges
               data2.futures?.forEach((futuresItem2) => {
-                if (normalizeSymbol(futuresItem2.symbol) === symbol) {
+                if (normalizeSymbol(futuresItem2.symbol) === normalizedSymbolSpot) {
                   const profit = calculateProfit(
                     parseFloat(spotItem1.price),
-                    parseFloat(futuresItem2.price)
+                    parseFloat(futuresItem2.lastPrice)
                   );
 
                   if (profit >= MIN_PROFIT) {
-                    const id = `${exchange1}-${exchange2}-${symbol}-sf`;
+                    const id = `${exchange1}-${exchange2}-${normalizedSymbolSpot}-sf`;
                     if (!processedPairs.has(id)) {
                       opportunities.push({
                         id,
-                        symbol,
+                        symbol: normalizedSymbolSpot,
                         exchange1,
                         exchange2,
                         type: "spot-futures",
                         price1: parseFloat(spotItem1.price),
-                        price2: parseFloat(futuresItem2.price),
+                        price2: parseFloat(futuresItem2.lastPrice),
                         profit,
                         timestamp: Date.now(),
                       });
@@ -428,39 +439,47 @@ const MarketAnalysis = () => {
           ) : (
             <AnimatePresence>
               <div className="opportunities-grid">
-                {filteredOpportunities.map((opp) => (
-                  <motion.div
-                    key={opp.id}
-                    className="opportunity-card"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.2 }}
-                    layout
-                  >
-                    <div className="card-header">
-                      <h3>{opp.symbol}</h3>
-                      <span className="profit">{opp.profit.toFixed(2)}%</span>
-                    </div>
-                    <div className="card-body">
-                      <div className="exchange-info">
-                        <div className="exchange">
-                          <span className="label">{opp.exchange1}</span>
-                          <span className="price">
-                            ${opp.price1.toFixed(4)}
-                          </span>
-                        </div>
-                        <div className="exchange">
-                          <span className="label">{opp.exchange2}</span>
-                          <span className="price">
-                            ${opp.price2.toFixed(4)}
-                          </span>
-                        </div>
+                {filteredOpportunities
+                  .filter((opp) => {
+                    const onlyOneExchangeSelected = selectedExchanges.length === 1;
+                    const sameExchange = opp.exchange1 === opp.exchange2;
+                    const isSpotFutures = opp.type === "spot-futures";
+
+                    if (onlyOneExchangeSelected) {
+                      return sameExchange && isSpotFutures;
+                    } else {
+                      return isSpotFutures;
+                    }
+                  })
+                  .map((opp) => (
+                    <motion.div
+                      key={opp.id}
+                      className="opportunity-card"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.2 }}
+                      layout
+                    >
+                      <div className="card-header">
+                        <h3>{opp.symbol}</h3>
+                        <span className="profit">{opp.profit.toFixed(2)}%</span>
                       </div>
-                      <div className="type-badge">{opp.type}</div>
-                    </div>
-                  </motion.div>
-                ))}
+                      <div className="card-body">
+                        <div className="exchange-info">
+                          <div className="exchange">
+                            <span className="label">{opp.exchange1}</span>
+                            <span className="price">${opp.price1.toFixed(4)}</span>
+                          </div>
+                          <div className="exchange">
+                            <span className="label">{opp.exchange2}</span>
+                            <span className="price">${opp.price2.toFixed(4)}</span>
+                          </div>
+                        </div>
+                        <div className="type-badge">{opp.type}</div>
+                      </div>
+                    </motion.div>
+                  ))}
               </div>
             </AnimatePresence>
           )}
