@@ -21,6 +21,14 @@ const EXCHANGES = ["binance", "mexc", "bitget", "gateio", "kucoin"];
 const BATCH_SIZE = 50; // Número de oportunidades mostradas por vez
 const MIN_PROFIT = 0.001; // Lucro mínimo para mostrar oportunidade
 
+const cleanFuturesSymbol = (symbol) => {
+  if (!symbol) return "";
+  return symbol
+    .replace(/_UMCBL$/, "")
+    .replace(/_DMCBL$/, "")
+    .replace(/_CMCBL$/, "");
+};
+
 const MarketAnalysis = () => {
   const [opportunities, setOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -197,7 +205,7 @@ const MarketAnalysis = () => {
               const normalizedSymbolSpot = normalizeSymbol(spotItem1.symbol);
 
               data1.futures?.forEach((futuresItem1) => {
-                if (normalizeSymbol(futuresItem1.symbol) === normalizedSymbolSpot) {
+                if (normalizeSymbol(cleanFuturesSymbol(futuresItem1.symbol)) === normalizedSymbolSpot) {
                   console.log("MATCH encontrado!", {
                     corretora: exchange1,
                     symbolSpot: spotItem1.symbol,
@@ -205,10 +213,14 @@ const MarketAnalysis = () => {
                     symbolFutures: futuresItem1.symbol,
                     priceFutures: futuresItem1.lastPrice,
                   });
-                  const profit = calculateProfit(
-                    parseFloat(spotItem1.price),
-                    parseFloat(futuresItem1.lastPrice)
-                  );
+                  const spotPrice = parseFloat(spotItem1.price);
+                  const futuresPrice = parseFloat(futuresItem1?.last ?? futuresItem1?.lastPrice);
+
+                  if (isNaN(spotPrice) || isNaN(futuresPrice)) {
+                    return; // Não cria se não tiver preço válido
+                  }
+
+                  const profit = calculateProfit(spotPrice, futuresPrice);
 
                   if (profit >= MIN_PROFIT) {
                     const id = `${exchange1}-${normalizedSymbolSpot}-sf`;
@@ -219,8 +231,8 @@ const MarketAnalysis = () => {
                         exchange1,
                         exchange2: exchange1,
                         type: "spot-futures",
-                        price1: parseFloat(spotItem1.price),
-                        price2: parseFloat(futuresItem1.lastPrice),
+                        price1: spotPrice,
+                        price2: futuresPrice,
                         profit,
                         timestamp: Date.now(),
                       });
@@ -254,7 +266,7 @@ const MarketAnalysis = () => {
                         exchange2,
                         type: "spot-spot",
                         price1: parseFloat(spotItem1.price),
-                        price2: parseFloat(spotItem2.Price),
+                        price2: parseFloat(spotItem2.price),
                         profit,
                         timestamp: Date.now(),
                       });
@@ -266,11 +278,15 @@ const MarketAnalysis = () => {
 
               // Spot vs Futures entre exchanges
               data2.futures?.forEach((futuresItem2) => {
-                if (normalizeSymbol(futuresItem2.symbol) === normalizedSymbolSpot) {
-                  const profit = calculateProfit(
-                    parseFloat(spotItem1.price),
-                    parseFloat(futuresItem2.lastPrice)
-                  );
+                if (normalizeSymbol(cleanFuturesSymbol(futuresItem2.symbol)) === normalizedSymbolSpot) {
+                  const spotPrice = parseFloat(spotItem1.price);
+                  const futuresPrice = parseFloat(futuresItem2?.last ?? futuresItem2?.lastPrice);
+
+                  if (isNaN(spotPrice) || isNaN(futuresPrice)) {
+                    return; // pula se algum preço estiver inválido
+                  }
+
+                  const profit = calculateProfit(spotPrice, futuresPrice);
 
                   if (profit >= MIN_PROFIT) {
                     const id = `${exchange1}-${exchange2}-${normalizedSymbolSpot}-sf`;
@@ -281,8 +297,8 @@ const MarketAnalysis = () => {
                         exchange1,
                         exchange2,
                         type: "spot-futures",
-                        price1: parseFloat(spotItem1.price),
-                        price2: parseFloat(futuresItem2.lastPrice),
+                        price1: spotPrice,
+                        price2: futuresPrice,
                         profit,
                         timestamp: Date.now(),
                       });
