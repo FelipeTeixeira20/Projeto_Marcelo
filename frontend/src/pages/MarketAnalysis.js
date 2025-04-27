@@ -153,7 +153,19 @@ const MarketAnalysis = () => {
     },
     [normalizeSymbol, calculateProfit]
   );
-
+  const getFuturesSymbol = (exchange, item) => {
+    if (exchange === "gateio") return item.contract;
+    if (exchange === "kucoin") return item.symbol;
+    return item.symbol;
+  };
+  
+  
+  const getFuturesPrice = (exchange, item) => {
+    if (exchange === "gateio") return item.last;
+    if (exchange === "kucoin") return item.price;
+    return item.last ?? item.lastPrice; // <- aqui!! se não for gateio nem kucoin, usa a lógica que você falou
+  };
+  
   // Função para buscar dados iniciais de forma otimizada
   const fetchInitialData = useCallback(async () => {
     try {
@@ -205,7 +217,12 @@ const MarketAnalysis = () => {
               const normalizedSymbolSpot = normalizeSymbol(spotItem1.symbol);
 
               data1.futures?.forEach((futuresItem1) => {
-                if (normalizeSymbol(cleanFuturesSymbol(futuresItem1.symbol)) === normalizedSymbolSpot) {
+                const normalizedFuturesSymbol = (exchange1 === "gateio" || exchange1 === "bitget")
+                  ? normalizeSymbol(cleanFuturesSymbol(getFuturesSymbol(exchange1, futuresItem1)))
+                  : normalizeSymbol(getFuturesSymbol(exchange1, futuresItem1));
+
+                if (normalizedFuturesSymbol === normalizedSymbolSpot) {
+
                   console.log("MATCH encontrado!", {
                     corretora: exchange1,
                     symbolSpot: spotItem1.symbol,
@@ -214,7 +231,7 @@ const MarketAnalysis = () => {
                     priceFutures: futuresItem1.lastPrice,
                   });
                   const spotPrice = parseFloat(spotItem1.price);
-                  const futuresPrice = parseFloat(futuresItem1?.last ?? futuresItem1?.lastPrice);
+                  const futuresPrice = parseFloat(getFuturesPrice(exchange1, futuresItem1));
 
                   if (isNaN(spotPrice) || isNaN(futuresPrice)) {
                     return; // Não cria se não tiver preço válido
@@ -278,16 +295,21 @@ const MarketAnalysis = () => {
 
               // Spot vs Futures entre exchanges
               data2.futures?.forEach((futuresItem2) => {
-                if (normalizeSymbol(cleanFuturesSymbol(futuresItem2.symbol)) === normalizedSymbolSpot) {
+                const normalizedFuturesSymbol2 = (exchange2 === "gateio" || exchange2 === "bitget")
+                  ? normalizeSymbol(cleanFuturesSymbol(getFuturesSymbol(exchange2, futuresItem2)))
+                  : normalizeSymbol(getFuturesSymbol(exchange2, futuresItem2));
+
+                if (normalizedFuturesSymbol2 === normalizedSymbolSpot) {
+
                   const spotPrice = parseFloat(spotItem1.price);
-                  const futuresPrice = parseFloat(futuresItem2?.last ?? futuresItem2?.lastPrice);
+                  const futuresPrice = parseFloat(getFuturesPrice(exchange2, futuresItem2));
 
                   if (isNaN(spotPrice) || isNaN(futuresPrice)) {
                     return; // pula se algum preço estiver inválido
                   }
 
                   const profit = calculateProfit(spotPrice, futuresPrice);
-
+ 
                   if (profit >= MIN_PROFIT) {
                     const id = `${exchange1}-${exchange2}-${normalizedSymbolSpot}-sf`;
                     if (!processedPairs.has(id)) {
