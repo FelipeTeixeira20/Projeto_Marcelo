@@ -21,13 +21,23 @@ const EXCHANGES = ["binance", "mexc", "bitget", "gateio", "kucoin"];
 const BATCH_SIZE = 50; // Número de oportunidades mostradas por vez
 const MIN_PROFIT = 0.001; // Lucro mínimo para mostrar oportunidade
 
-const cleanFuturesSymbol = (symbol) => {
+const cleanFuturesSymbol = (exchange, symbol) => {
   if (!symbol) return "";
-  return symbol
-    .replace(/_UMCBL$/, "")
-    .replace(/_DMCBL$/, "")
-    .replace(/_CMCBL$/, "");
+
+  if (exchange === "gateio" || exchange === "bitget") {
+    return symbol
+      .replace(/_UMCBL$/, "")
+      .replace(/_DMCBL$/, "")
+      .replace(/_CMCBL$/, "");
+  }
+
+  if (exchange === "kucoin") {
+    return symbol.endsWith("M") ? symbol.slice(0, -1) : symbol;
+  }
+
+  return symbol;
 };
+
 
 const MarketAnalysis = () => {
   const [opportunities, setOpportunities] = useState([]);
@@ -217,10 +227,7 @@ const MarketAnalysis = () => {
               const normalizedSymbolSpot = normalizeSymbol(spotItem1.symbol);
 
               data1.futures?.forEach((futuresItem1) => {
-                const normalizedFuturesSymbol = (exchange1 === "gateio" || exchange1 === "bitget")
-                  ? normalizeSymbol(cleanFuturesSymbol(getFuturesSymbol(exchange1, futuresItem1)))
-                  : normalizeSymbol(getFuturesSymbol(exchange1, futuresItem1));
-
+                const normalizedFuturesSymbol = normalizeSymbol(cleanFuturesSymbol(exchange1, getFuturesSymbol(exchange1, futuresItem1)));
                 if (normalizedFuturesSymbol === normalizedSymbolSpot) {
 
                   console.log("MATCH encontrado!", {
@@ -295,10 +302,7 @@ const MarketAnalysis = () => {
 
               // Spot vs Futures entre exchanges
               data2.futures?.forEach((futuresItem2) => {
-                const normalizedFuturesSymbol2 = (exchange2 === "gateio" || exchange2 === "bitget")
-                  ? normalizeSymbol(cleanFuturesSymbol(getFuturesSymbol(exchange2, futuresItem2)))
-                  : normalizeSymbol(getFuturesSymbol(exchange2, futuresItem2));
-
+                const normalizedFuturesSymbol2 = normalizeSymbol(cleanFuturesSymbol(exchange2, getFuturesSymbol(exchange2, futuresItem2)));
                 if (normalizedFuturesSymbol2 === normalizedSymbolSpot) {
 
                   const spotPrice = parseFloat(spotItem1.price);
