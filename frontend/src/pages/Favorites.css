@@ -24,6 +24,62 @@
   text-shadow: 0 0 10px rgba(107, 1, 201, 0.8);
 }
 
+/* Container para os controles de filtro e ordenação */
+.favorites-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  justify-content: flex-end; /* Alinha os controles à direita */
+  width: 100%; /* Ocupa a largura total para alinhar corretamente */
+}
+
+/* Estilo para os selects - similar ao search-input do Dashboard */
+.favorites-search-input {
+  padding: 10px 15px; /* Ajustado para melhor visual */
+  font-size: 15px; /* Ajustado para melhor visual */
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  outline: none;
+  transition: border 0.3s ease-in-out;
+  min-width: 180px; /* Largura mínima */
+  -webkit-appearance: none; /* Remove estilo padrão do select */
+  -moz-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 1em;
+  padding-right: 40px; /* Espaço para a seta */
+}
+
+.favorites-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.favorites-search-input:focus {
+  border-color: rgba(107, 1, 201, 0.8);
+}
+
+.favorites-search-input option {
+  background-color: #1a1d24; /* Cor de fundo das opções */
+  color: white;
+}
+
+/* Para garantir que o container de controles se alinhe bem em telas menores */
+@media (max-width: 768px) {
+  .favorites-controls {
+    flex-direction: column; /* Empilha os controles verticalmente */
+    align-items: stretch; /* Faz os selects ocuparem a largura total */
+    justify-content: center;
+  }
+  .favorites-search-input {
+    width: 100%; /* Ocupa a largura disponível */
+  }
+}
+
 /* Mensagem quando não há favoritos */
 .empty-message {
   text-align: center;

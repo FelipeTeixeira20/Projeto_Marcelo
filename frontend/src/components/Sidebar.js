@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from 'axios';
+import axios from "axios";
 import {
   FaBars,
   FaTimes,
@@ -9,7 +9,7 @@ import {
   FaSignOutAlt,
   FaStar,
   FaUser,
-  FaUsers
+  FaUsers,
 } from "react-icons/fa";
 import { MdShowChart, MdAttachMoney } from "react-icons/md";
 import { useSidebar } from "../context/SidebarContext";
@@ -24,7 +24,7 @@ const MenuItem = ({ to, icon: Icon, text, className = "", onClick }) => {
       </button>
     );
   }
-  
+
   return (
     <Link to={to} className={`menu-item ${className}`}>
       <Icon className="menu-icon" />
@@ -41,13 +41,17 @@ const Sidebar = () => {
   useEffect(() => {
     const checkAdminStatus = async () => {
       try {
-        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-        const response = await axios.get(`http://${window.location.hostname}:5000/api/users/me`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const token =
+          localStorage.getItem("token") || sessionStorage.getItem("token");
+        const response = await axios.get(
+          `http://${window.location.hostname}:5000/api/users/me`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         setIsAdmin(response.data.isAdmin);
       } catch (error) {
-        console.error('Erro ao verificar status de admin:', error);
+        console.error("Erro ao verificar status de admin:", error);
       }
     };
 
@@ -56,12 +60,12 @@ const Sidebar = () => {
 
   const handleLogout = () => {
     // Remover tokens de autenticação e username
-    localStorage.removeItem('token');
-    localStorage.removeItem('username');
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('username');
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("username");
     // Redirecionar para a página de login
-    navigate('/login');
+    navigate("/login");
   };
 
   const menuItems = [
@@ -69,7 +73,6 @@ const Sidebar = () => {
     { to: "/market-analysis", icon: MdShowChart, text: "Análise de Mercado" },
     { to: "/favorites", icon: FaStar, text: "Favoritos" },
     { to: "/profile", icon: FaUser, text: "Perfil" },
-    { to: "/settings", icon: FaCog, text: "Configurações" },
   ];
 
   // Adiciona o item de gerenciamento de usuários apenas para admins

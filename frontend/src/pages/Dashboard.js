@@ -39,6 +39,13 @@ const Dashboard = () => {
   const ws = useRef(null);
   const observer = useRef();
 
+  // Função auxiliar para obter o nome do usuário logado
+  const getLoggedInUsername = () => {
+    return (
+      localStorage.getItem("username") || sessionStorage.getItem("username")
+    );
+  };
+
   // 🔥 Função para buscar dados iniciais da API da exchange selecionada
   const fetchInitialData = async () => {
     try {
@@ -467,64 +474,87 @@ const Dashboard = () => {
   }, [selectedExchange]);
 
   // 🔥 Lazy Loading: Carrega mais cards ao rolar a tela
-  const lastCryptoElementRef = useCallback((node) => {
-    if (observer.current) observer.current.disconnect();
-    observer.current = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) {
-        setVisibleCryptos((prev) => prev + ITEMS_PER_PAGE);
-      }
-    });
-    if (node) observer.current.observe(node);
-  }, []);
+  const lastCryptoElementRef = useCallback(
+    (node) => {
+      if (observer.current) observer.current.disconnect();
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && cryptos.length > 0 && !loading) {
+          setVisibleCryptos((prev) => prev + ITEMS_PER_PAGE);
+        }
+      });
+      if (node) observer.current.observe(node);
+    },
+    [cryptos.length, loading]
+  );
 
   const toggleFavorite = (symbol) => {
+    const username = getLoggedInUsername();
+    if (!username) return; // Não fazer nada se não houver usuário
+    const favoritesKey = `favorites_${username}`;
+
     setFavorites((prev) => {
-      const newFavorites = prev.includes(symbol)
+      const isCurrentlyFavorite = prev.includes(symbol);
+      const newFavoritesSymbols = isCurrentlyFavorite
         ? prev.filter((fav) => fav !== symbol)
         : [...prev, symbol];
 
       // Encontrar os dados completos da moeda
       const coinData = cryptos.find((crypto) => crypto.symbol === symbol);
 
-      // Recuperar favoritos existentes do localStorage
-      const storedFavorites =
-        JSON.parse(localStorage.getItem("favorites")) || [];
+      // Recuperar favoritos existentes do localStorage para o usuário atual
+      const storedUserFavorites =
+        JSON.parse(localStorage.getItem(favoritesKey)) || [];
 
-      if (prev.includes(symbol)) {
+      if (isCurrentlyFavorite) {
         // Remover dos favoritos
-        const updatedFavorites = storedFavorites.filter(
+        const updatedUserFavorites = storedUserFavorites.filter(
           (fav) => fav.symbol !== symbol
         );
-        localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
+        localStorage.setItem(
+          favoritesKey,
+          JSON.stringify(updatedUserFavorites)
+        );
       } else {
         // Adicionar aos favoritos
-        const favoriteData = {
-          id: symbol,
-          symbol: coinData.symbol,
-          name: coinData.symbol, // Como não temos o nome completo, usando symbol
-          image: `https://s2.coinmarketcap.com/static/img/coins/64x64/${
-            coinData.id || 1
-          }.png`, // URL genérica de exemplo
-          current_price: parseFloat(coinData.price),
-          price_change_24h: 0, // Adicionar se tiver esse dado
-          price_change_percentage_24h: 0, // Adicionar se tiver esse dado
-          exchange: selectedExchange.name, // Adicionando a exchange aos dados
-        };
-
-        localStorage.setItem(
-          "favorites",
-          JSON.stringify([...storedFavorites, favoriteData])
-        );
+        if (coinData) {
+          // Apenas adicionar se tivermos os dados da moeda
+          const favoriteData = {
+            id: symbol, // Usar symbol como ID se não houver um específico
+            symbol: coinData.symbol,
+            name: coinData.name || coinData.symbol, // Usar nome se disponível, senão symbol
+            image:
+              coinData.image ||
+              `https://s2.coinmarketcap.com/static/img/coins/64x64/${
+                coinData.id || "1"
+              }.png`, // Usar imagem se disponível
+            current_price: parseFloat(coinData.price),
+            // Adicionar outros campos relevantes se disponíveis em coinData
+            exchangeId: coinData.exchangeId,
+            exchangeName: coinData.exchangeName,
+          };
+          localStorage.setItem(
+            favoritesKey,
+            JSON.stringify([...storedUserFavorites, favoriteData])
+          );
+        } else {
+          console.warn(
+            `Dados não encontrados para ${symbol}, não foi possível adicionar aos favoritos.`
+          );
+        }
       }
-
-      return newFavorites;
+      return newFavoritesSymbols;
     });
   };
 
   // Também precisamos carregar os favoritos quando o componente montar
   useEffect(() => {
-    const storedFavorites = JSON.parse(localStorage.getItem("favorites")) || [];
-    setFavorites(storedFavorites.map((fav) => fav.symbol)); // Guardamos apenas os símbolos no estado
+    const username = getLoggedInUsername();
+    if (!username) return;
+    const favoritesKey = `favorites_${username}`;
+
+    const storedUserFavorites =
+      JSON.parse(localStorage.getItem(favoritesKey)) || [];
+    setFavorites(storedUserFavorites.map((fav) => fav.symbol)); // Guardamos apenas os símbolos no estado
   }, []);
 
   // 🔄 Filtrando criptomoedas conforme a busca e verificando se pertence à corretora atual

@@ -18,6 +18,7 @@ import Settings from "./pages/Settings";
 import UserManagement from "./pages/UserManagement";
 import PageTransition from "./components/PageTransition";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 
 // Componente para controlar o scroll ao trocar de página
 function ScrollToTop() {
@@ -33,7 +34,9 @@ function ScrollToTop() {
 function AnimatedRoutes() {
   const location = useLocation();
   const isLoginPage =
-    location.pathname === "/login" || location.pathname === "/";
+    location.pathname === "/login" ||
+    location.pathname === "/" ||
+    location.pathname === "/register";
 
   return (
     <AnimatePresence mode="wait">
@@ -42,6 +45,7 @@ function AnimatedRoutes() {
         <Routes location={location} key={location.pathname}>
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route
             path="/dashboard"
             element={
@@ -74,14 +78,14 @@ function AnimatedRoutes() {
               </PrivateRoute>
             }
           />
-          <Route
+          {/* <Route
             path="/settings"
             element={
               <PrivateRoute>
                 <Settings />
               </PrivateRoute>
             }
-          />
+          /> */}
           <Route
             path="/users"
             element={

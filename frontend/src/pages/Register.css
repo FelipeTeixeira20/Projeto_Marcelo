@@ -1,0 +1,169 @@
+.register-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+  padding-top: 80px; /* Espaço para o header */
+  padding-bottom: 40px;
+}
+
+.register-modal {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 30px;
+  width: 100%;
+  max-width: 500px; /* Aumentar um pouco para mais campos */
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.register-title {
+  color: #fff;
+  text-align: center;
+  margin-bottom: 25px;
+  font-size: 1.8rem; /* Um pouco menor que o login */
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+/* Reutilizando estilos do Login.css para form-group, form-input, form-label */
+.form-group {
+  position: relative;
+  margin-bottom: 25px; /* Ajustar espaçamento */
+  padding-top: 18px; /* Adicionar espaço no topo para a label flutuante */
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 5px;
+  color: #fff;
+  font-size: 15px;
+  transition: all 0.3s ease;
+  box-sizing: border-box; /* Para padding não afetar width total */
+  appearance: none; /* Adicionado para normalizar a aparência */
+  -webkit-appearance: none; /* Para compatibilidade com Safari/Chrome antigos */
+  -moz-appearance: none; /* Para compatibilidade com Firefox antigos */
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #00ff88;
+  box-shadow: 0 0 5px rgba(0, 255, 136, 0.3);
+}
+
+.form-label {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+  pointer-events: none;
+  transition: 0.3s ease all;
+  font-size: 15px;
+}
+
+.form-input:focus ~ .form-label,
+.form-input:not(:placeholder-shown) ~ .form-label,
+.form-input[type="date"] ~ .form-label, /* Para que label de data fique ativa */
+.form-label.active {
+  /* Classe para labels que precisam estar sempre ativas (ex: select, date) */
+  top: 2px; /* Ajustar para posicionar dentro do novo padding-top */
+  font-size: 12px; /* Pode reduzir um pouco se necessário */
+  color: #00ff88;
+}
+
+/* Específico para select */
+.form-input[data-placeholder-shown="false"] ~ .form-label {
+  top: 2px; /* Ajustar para consistência */
+  font-size: 12px;
+  color: #00ff88;
+}
+
+select.form-input {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 30px; /* Espaço para a seta */
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23666%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.4-5.4-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px top 50%;
+  background-size: 10px auto;
+}
+
+select.form-input option {
+  background-color: #1a1a1a; /* Cor de fundo das opções */
+  color: #fff;
+}
+
+/* Reutilizando estilos do Login.css para submit-button */
+.submit-button {
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  border: 2px solid #00ff88;
+  color: #00ff88;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  margin-top: 10px; /* Espaço antes do botão */
+}
+
+.submit-button:hover {
+  background: #00ff88;
+  color: #000;
+  box-shadow: 0 0 20px #00ff88;
+}
+
+.submit-button::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transform: rotate(45deg);
+  transition: 0.5s;
+}
+
+.submit-button:hover::after {
+  left: 100%;
+}
+
+/* Mensagens de erro e sucesso */
+.error-message {
+  color: #ff4444;
+  text-align: center;
+  margin-top: 15px;
+  font-size: 14px;
+  min-height: 20px;
+}
+
+.success-message {
+  color: #00ff88;
+  text-align: center;
+  margin-top: 15px;
+  font-size: 14px;
+  min-height: 20px;
+}
+
+/* Para garantir que a label do input date não sobreponha o valor */
+.form-input[type="date"]:not(:placeholder-shown) {
+  color: #fff; /* Manter a cor do texto branca quando preenchido */
+}
+.form-input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.6) sepia(1) saturate(5) hue-rotate(100deg); /* Estiliza o ícone do calendário */
+  cursor: pointer;
+}

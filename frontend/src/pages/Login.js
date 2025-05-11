@@ -1,61 +1,68 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import Header from '../components/Header';
-import './Login.css';
-import logo from '../assets/logo_arby.png'; // 👈 Logo adicionada
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import Header from "../components/Header";
+import "./Login.css";
+import logo from "../assets/logo_arby.png"; // 👈 Logo adicionada
 
-const SERVER_URL = window.location.hostname === "192.168.100.26"
-  ? "192.168.100.26"
-  : window.location.hostname;
+const SERVER_URL =
+  window.location.hostname === "192.168.100.26"
+    ? "192.168.100.26"
+    : window.location.hostname;
 
 const Login = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    username: '',
-    password: '',
-    rememberMe: false
+    username: "",
+    password: "",
+    rememberMe: false,
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const token =
+      localStorage.getItem("token") || sessionStorage.getItem("token");
     if (token) {
-      navigate('/dashboard');
+      navigate("/dashboard");
     }
   }, [navigate]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     try {
-      const response = await axios.post(`http://${SERVER_URL}:5000/api/auth/login`, {
-        username: formData.username,
-        password: formData.password
-      });
+      const response = await axios.post(
+        `http://${SERVER_URL}:5000/api/auth/login`,
+        {
+          username: formData.username,
+          password: formData.password,
+        }
+      );
 
       const { token } = response.data;
 
       if (formData.rememberMe) {
-        localStorage.setItem('token', token);
-        localStorage.setItem('username', formData.username);
+        localStorage.setItem("token", token);
+        localStorage.setItem("username", formData.username);
       } else {
-        sessionStorage.setItem('token', token);
-        sessionStorage.setItem('username', formData.username);
+        sessionStorage.setItem("token", token);
+        sessionStorage.setItem("username", formData.username);
       }
 
-      navigate('/dashboard');
+      navigate("/dashboard");
     } catch (err) {
-      setError(err.response?.data?.message || 'Erro ao fazer login. Tente novamente.');
+      setError(
+        err.response?.data?.message || "Erro ao fazer login. Tente novamente."
+      );
     }
   };
 
@@ -67,23 +74,23 @@ const Login = () => {
         {/* 👇 Adicionando logo acima do modal, sem interferir no CSS existente */}
         <div
           style={{
-            position: 'absolute',
-            top: '150px', // ⬅️ Aumentado pra descer mais
-            display: 'flex',
-            justifyContent: 'center',
-            width: '100%',
-            zIndex: 1
+            position: "absolute",
+            top: "80px", // ⬅️ Diminuído para subir a logo
+            display: "flex",
+            justifyContent: "center",
+            width: "100%",
+            zIndex: 1,
           }}
         >
           <img
             src={logo}
             alt="Logo ARBY"
             style={{
-              width: '160px', // ⬅️ Aumentado
-              height: '160px',
-              objectFit: 'contain',
-              borderRadius: '16px',
-              filter: 'drop-shadow(0 0 3px rgba(255, 255, 255, 0.9))'
+              width: "160px", // ⬅️ Aumentado
+              height: "160px",
+              objectFit: "contain",
+              borderRadius: "16px",
+              filter: "drop-shadow(0 0 3px rgba(255, 255, 255, 0.9))",
             }}
           />
         </div>
@@ -132,6 +139,17 @@ const Login = () => {
             </button>
 
             {error && <div className="error-message">{error}</div>}
+
+            <div className="register-link-container">
+              <p>Não tem uma conta?</p>
+              <button
+                type="button"
+                className="register-button"
+                onClick={() => navigate("/register")}
+              >
+                Cadastre-se
+              </button>
+            </div>
           </form>
         </div>
       </div>

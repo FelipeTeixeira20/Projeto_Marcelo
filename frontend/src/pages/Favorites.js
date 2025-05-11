@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import Layout from "../components/Layout";
 import { FaStar } from "react-icons/fa";
 import CryptoModal from "../components/CryptoModal";
@@ -19,15 +19,41 @@ const Favorites = () => {
   const ws = useRef(null);
   const reconnectTimeout = useRef(null);
 
+  // Novos estados para filtros e ordenação
+  const [sortOption, setSortOption] = useState("");
+  const [selectedExchangeName, setSelectedExchangeName] = useState("all"); // 'all' para todas as corretoras
+  const [exchangesInFavorites, setExchangesInFavorites] = useState([]);
+
+  // Função auxiliar para obter o nome do usuário logado
+  const getLoggedInUsername = () => {
+    return (
+      localStorage.getItem("username") || sessionStorage.getItem("username")
+    );
+  };
+
   useEffect(() => {
     const loadFavorites = () => {
+      const username = getLoggedInUsername();
+      if (!username) {
+        setFavorites([]); // Nenhum usuário logado, nenhum favorito para mostrar
+        return;
+      }
       try {
+        const favoritesKey = `favorites_${username}`;
         const storedFavorites =
-          JSON.parse(localStorage.getItem("favorites")) || [];
+          JSON.parse(localStorage.getItem(favoritesKey)) || [];
         const uniqueFavorites = Array.from(
           new Map(storedFavorites.map((item) => [item.symbol, item])).values()
         );
         setFavorites(uniqueFavorites);
+
+        // Extrair corretoras únicas dos favoritos
+        const exchanges = [
+          ...new Set(
+            uniqueFavorites.map((fav) => fav.exchangeName).filter(Boolean)
+          ),
+        ];
+        setExchangesInFavorites(exchanges.sort());
       } catch (error) {
         console.error("Erro ao carregar favoritos:", error);
         setFavorites([]);
@@ -121,17 +147,33 @@ const Favorites = () => {
   }, []);
 
   const handleUnfavorite = (symbol) => {
+    const username = getLoggedInUsername();
+    if (!username) return; // Não fazer nada se não houver usuário
+
     const updatedFavorites = favorites.filter((fav) => fav.symbol !== symbol);
     setFavorites(updatedFavorites);
-    localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
+    const favoritesKey = `favorites_${username}`;
+    localStorage.setItem(favoritesKey, JSON.stringify(updatedFavorites));
   };
 
   const handleCardClick = async (symbol) => {
     try {
-      setSelectedCrypto({ symbol });
+      // Tentaremos buscar os dados da MEXC por padrão se não houver exchange no favorito
+      // O ideal seria ter a exchange guardada no favorito para buscar da correta
+      const favoriteData = favorites.find((f) => f.symbol === symbol);
+      const exchangeToFetch =
+        favoriteData?.exchangeName?.toLowerCase() || "mexc"; // Default para mexc
+
+      setSelectedCrypto({
+        symbol,
+        loading: true,
+        exchange: exchangeToFetch.toUpperCase(),
+      });
 
       const response = await axios.get(
-        `http://localhost:5000/api/mexc/ticker/${encodeURIComponent(symbol)}`
+        `http://${SERVER_URL}:5000/api/${exchangeToFetch}/ticker/${encodeURIComponent(
+          symbol
+        )}`
       );
       const tickerData = response.data;
 
@@ -149,6 +191,32 @@ const Favorites = () => {
     }
   };
 
+  // Aplicar filtros e ordenação
+  const processedFavorites = useMemo(() => {
+    let filtered = [...favorites];
+
+    // Filtrar por corretora
+    if (selectedExchangeName !== "all") {
+      filtered = filtered.filter(
+        (fav) => fav.exchangeName === selectedExchangeName
+      );
+    }
+
+    // Ordenar
+    if (sortOption === "price-asc") {
+      filtered.sort(
+        (a, b) => parseFloat(a.current_price) - parseFloat(b.current_price)
+      );
+    } else if (sortOption === "price-desc") {
+      filtered.sort(
+        (a, b) => parseFloat(b.current_price) - parseFloat(a.current_price)
+      );
+    } else if (sortOption === "alphabetical") {
+      filtered.sort((a, b) => a.symbol.localeCompare(b.symbol));
+    }
+    return filtered;
+  }, [favorites, selectedExchangeName, sortOption]);
+
   return (
     <Layout>
       <CryptoBackground />
@@ -161,13 +229,41 @@ const Favorites = () => {
           </p>
         </div>
 
+        {/* Controles de Filtro e Ordenação */}
+        <div className="favorites-controls favorites-search-filter-container">
+          {" "}
+          {/* Adicionada classe do dashboard para reutilizar */}
+          <select
+            className="favorites-search-input" // Classe similar à do dashboard
+            value={sortOption}
+            onChange={(e) => setSortOption(e.target.value)}
+          >
+            <option value="">Ordenar por...</option>
+            <option value="price-asc">Preço: Menor → Maior</option>
+            <option value="price-desc">Preço: Maior → Menor</option>
+            <option value="alphabetical">Nome: A → Z</option>
+          </select>
+          <select
+            className="favorites-search-input favorites-exchange-select" // Classes similares às do dashboard
+            value={selectedExchangeName}
+            onChange={(e) => setSelectedExchangeName(e.target.value)}
+          >
+            <option value="all">Todas as Corretoras</option>
+            {exchangesInFavorites.map((exchange) => (
+              <option key={exchange} value={exchange}>
+                {exchange}
+              </option>
+            ))}
+          </select>
+        </div>
+
         {favorites.length === 0 ? (
           <p className="empty-message">
             Você ainda não adicionou nenhuma criptomoeda aos favoritos.
           </p>
         ) : (
           <div className="favorites-grid">
-            {favorites.map((coin) => (
+            {processedFavorites.map((coin) => (
               <div
                 key={coin.symbol}
                 className={`favorites-card ${priceChanges[coin.symbol] || ""}`}

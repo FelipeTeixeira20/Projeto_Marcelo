@@ -20,7 +20,7 @@
   padding: 20px;
   border-radius: 10px;
   margin-bottom: 30px;
-  margin-top: -100px;
+  margin-top: 30px;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -32,7 +32,6 @@
   gap: 10px;
   margin-bottom: 20px;
   font-size: 1.5rem;
-  
 }
 
 .form-group {
@@ -40,7 +39,10 @@
 }
 
 .form-group input[type="text"],
-.form-group input[type="password"] {
+.form-group input[type="password"],
+.form-group input[type="date"],
+.form-group input[type="email"],
+.form-group select {
   width: 98%;
   padding: 10px;
   background: rgba(255, 255, 255, 0.1);
@@ -51,7 +53,10 @@
 }
 
 .form-group input[type="text"]:focus,
-.form-group input[type="password"]:focus {
+.form-group input[type="password"]:focus,
+.form-group input[type="date"]:focus,
+.form-group input[type="email"]:focus,
+.form-group select:focus {
   outline: none;
   border-color: #00ff88;
   box-shadow: 0 0 5px rgba(0, 255, 136, 0.5);
@@ -113,6 +118,12 @@
   margin: 0;
   margin-bottom: 5px;
   font-size: 1.2rem;
+}
+
+.user-detail {
+  font-size: 0.85rem;
+  color: #ccc;
+  margin: 3px 0;
 }
 
 .badge {
@@ -242,4 +253,30 @@
 
 .error {
   color: #ff4444;
-} 
+}
+
+/* Ajuste para inputs de data e select no formulário de UserManagement */
+.form-input-date,
+.form-input-select {
+  width: 100%; /* Garante que ocupem a largura da form-group */
+  box-sizing: border-box; /* Importante para padding não estourar layout */
+  color: #fff; /* Cor do texto */
+}
+
+.form-input-date::-webkit-calendar-picker-indicator {
+  filter: invert(0.8) sepia(1) saturate(5) hue-rotate(100deg);
+  cursor: pointer;
+}
+
+.form-input-select option {
+  background-color: #1a1a1a;
+  color: #fff;
+}
+
+/* Para que o placeholder de data seja visível */
+.form-input-date:required:invalid::-webkit-datetime-edit {
+  color: transparent;
+}
+.form-input-date:focus::-webkit-datetime-edit {
+  color: #fff !important;
+}
