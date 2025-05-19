@@ -52,6 +52,24 @@ const MarketAnalysis = () => {
   const opportunitiesCache = useRef(new Map());
   const lastUpdateTime = useRef(new Map());
 
+  const getLiquidityValue = (exchange, item) => {
+    if (!item) return 0;
+  
+    switch (exchange) {
+      case "binance":
+      case "bitget":
+        return parseFloat(item.quoteVolume ?? 0);
+      case "mexc":
+        return parseFloat(item.amount24 ?? 0);
+      case "gateio":
+        return parseFloat(item.volume_24h_quote ?? 0);
+      case "kucoin":
+        return parseFloat(item.volume ?? 0); // volume vem como string "0"
+      default:
+        return 0;
+    }
+  };
+
   // Função para normalizar símbolos (memoizada)
   const normalizeSymbol = useMemo(() => {
     const symbolCache = new Map();
@@ -259,7 +277,9 @@ const MarketAnalysis = () => {
                         price2: futuresPrice,
                         profit,
                         timestamp: Date.now(),
-                      });
+                        liquidity1: getLiquidityValue(exchange1, spotItem1),
+                        liquidity2: getLiquidityValue(exchange2, futuresItem1),
+                      });                                 
                       processedPairs.add(id);
                     }
                   }
@@ -293,7 +313,9 @@ const MarketAnalysis = () => {
                         price2: parseFloat(spotItem2.price),
                         profit,
                         timestamp: Date.now(),
-                      });
+                        liquidity1: getLiquidityValue(exchange1, spotItem1),
+                        liquidity2: getLiquidityValue(exchange2, spotItem2),                       
+                      });                      
                       processedPairs.add(id);
                     }
                   }
@@ -327,7 +349,9 @@ const MarketAnalysis = () => {
                         price2: futuresPrice,
                         profit,
                         timestamp: Date.now(),
-                      });
+                        liquidity1: getLiquidityValue(exchange1, spotItem1),
+                        liquidity2: getLiquidityValue(exchange2, futuresItem2),                        
+                      });                      
                       processedPairs.add(id);
                     }
                   }
@@ -508,16 +532,34 @@ const MarketAnalysis = () => {
                         <span className="profit">{opp.profit.toFixed(2)}%</span>
                       </div>
                       <div className="card-body">
-                        <div className="exchange-info">
-                          <div className="exchange">
-                            <span className="label">{opp.exchange1}</span>
-                            <span className="price">${opp.price1.toFixed(4)}</span>
-                          </div>
-                          <div className="exchange">
-                            <span className="label">{opp.exchange2}</span>
-                            <span className="price">${opp.price2.toFixed(4)}</span>
-                          </div>
+                      <div className="exchange-info">
+                        <div className="exchange">
+                          <span className="label">{opp.exchange1}</span>
+                          <span className="price">${opp.price1.toFixed(4)}</span>
+                          {opp.liquidity1 > 0 && (
+                            <span className="liquidity">
+                              💧 {opp.liquidity1.toLocaleString("en-US", {
+                                style: "currency",
+                                currency: "USD",
+                                maximumFractionDigits: 0,
+                              })}
+                            </span>
+                          )}
                         </div>
+                        <div className="exchange">
+                          <span className="label">{opp.exchange2}</span>
+                          <span className="price">${opp.price2.toFixed(4)}</span>
+                          {opp.liquidity2 > 0 && (
+                            <span className="liquidity">
+                              💧 {opp.liquidity2.toLocaleString("en-US", {
+                                style: "currency",
+                                currency: "USD",
+                                maximumFractionDigits: 0,
+                              })}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                         <div className="type-badge">{opp.type}</div>
                       </div>
                     </motion.div>

@@ -648,3 +648,10 @@ tr {
     white-space: nowrap;
   }
 }
+.liquidity {
+  font-size: 0.85rem;
+  color: #4fc3f7;
+  display: block;
+  margin-top: 4px;
+}
+
