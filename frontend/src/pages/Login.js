@@ -139,17 +139,6 @@ const Login = () => {
             </button>
 
             {error && <div className="error-message">{error}</div>}
-
-            <div className="register-link-container">
-              <p>Não tem uma conta?</p>
-              <button
-                type="button"
-                className="register-button"
-                onClick={() => navigate("/register")}
-              >
-                Cadastre-se
-              </button>
-            </div>
           </form>
         </div>
       </div>
