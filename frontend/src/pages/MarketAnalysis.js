@@ -64,7 +64,8 @@ const MarketAnalysis = () => {
       case "gateio":
         return parseFloat(item.volume_24h_quote ?? 0);
       case "kucoin":
-        return parseFloat(item.volume ?? 0); // volume vem como string "0"
+        // Se for futures da KuCoin, o campo é quoteVolume (igual ao bitget/binance)
+        return parseFloat(item.quoteVolume ?? item.volume ?? 0);
       default:
         return 0;
     }
@@ -138,46 +139,70 @@ const MarketAnalysis = () => {
       const now = Date.now();
       const updates = new Map();
 
-      // Agrupa atualizações por exchange e símbolo
       data.forEach((update) => {
-        const key = `${update.exchangeName}-${normalizeSymbol(update.symbol)}`;
+        const exchangeKey =
+          update.exchangeId?.toLowerCase() ||
+          update.exchangeName?.toLowerCase() ||
+          update.exchange?.toLowerCase() ||
+          "";
+      
+        const symbolKey = normalizeSymbol(update.symbol);
+        const key = `${exchangeKey}-${symbolKey}`;
+      
+        console.log("✅ Chave construída:", key);
+      
         updates.set(key, {
           price: parseFloat(update.price),
           timestamp: now,
         });
-      });
+      });    
 
       // Atualiza apenas se passou tempo suficiente desde a última atualização
       setOpportunities((prev) => {
         const updated = prev.map((opp) => {
-          const key1 = `${opp.exchange1}-${opp.symbol}`;
-          const key2 = `${opp.exchange2}-${opp.symbol}`;
+          const key1 = `${opp.exchange1.toLowerCase()}-${normalizeSymbol(opp.symbol)}`;
+          const key2 = `${opp.exchange2.toLowerCase()}-${normalizeSymbol(opp.symbol)}`;
           const update1 = updates.get(key1);
           const update2 = updates.get(key2);
-
+      
           if (!update1 && !update2) return opp;
-
+      
           const lastUpdate = lastUpdateTime.current.get(opp.id) || 0;
-          if (now - lastUpdate < 1000) return opp; // Limita atualizações a 1 por segundo
-
+          if (now - lastUpdate < 1000) return opp;
+      
           const newPrice1 = update1 ? update1.price : opp.price1;
           const newPrice2 = update2 ? update2.price : opp.price2;
           const profit = calculateProfit(newPrice1, newPrice2);
-
+      
+          const liquidity1 = update1?.liquidity ?? opp.liquidity1;
+          const liquidity2 = update2?.liquidity ?? opp.liquidity2;
+      
           if (profit < MIN_PROFIT) return opp;
-
-          lastUpdateTime.current.set(opp.id, now);
-          return {
-            ...opp,
-            price1: newPrice1,
-            price2: newPrice2,
-            profit,
-            timestamp: now,
-          };
+      
+          const hasChanged =
+            newPrice1 !== opp.price1 ||
+            newPrice2 !== opp.price2 ||
+            liquidity1 !== opp.liquidity1 ||
+            liquidity2 !== opp.liquidity2;
+      
+          if (hasChanged) {
+            lastUpdateTime.current.set(opp.id, now);
+            return {
+              ...opp,
+              price1: newPrice1,
+              price2: newPrice2,
+              liquidity1,
+              liquidity2,
+              profit,
+              timestamp: now,
+            };
+          }
+      
+          return opp; // <- ESSENCIAL! Sempre retorna opp mesmo se não mudar
         });
-
+      
         return updated;
-      });
+      });     
     },
     [normalizeSymbol, calculateProfit]
   );
@@ -401,7 +426,7 @@ const MarketAnalysis = () => {
         ws.current.close();
       }
 
-      const wsUrl = `ws://${SERVER_URL}:5000/ws`;
+      const wsUrl = `ws://localhost:5000/ws`; // forçado para localhost
       ws.current = new WebSocket(wsUrl);
 
       ws.current.onopen = () => {
