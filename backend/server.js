@@ -90,6 +90,36 @@ async function fetchPrices() {
     // Array para armazenar todos os dados de todas as corretoras
     let allPrices = [];
 
+    // Buscar dados das outras corretoras através da nossa própria API
+    const internalExchanges = ["binance", "bitget", "gateio", "kucoin", "mexc"];
+    for (const exch of internalExchanges) {
+      try {
+        const [spot, futures] = await Promise.all([
+          axios.get(`http://localhost:5000/api/${exch}/spot/prices`),
+          axios.get(`http://localhost:5000/api/${exch}/futures/prices`)
+        ]);
+        
+        // Aplique variação nos dados recebidos para simular mudança
+        const applyRandomFluctuation = (arr) => arr.map(item => ({
+          ...item,
+          exchangeId: exch,
+          price: parseFloat(item.price || item.lastPrice || item.last || 0) * (1 + (Math.random() * 0.01 - 0.005)), // ±0.5%
+          liquidity: parseFloat(
+            item.quoteVolume ?? item.amount24 ?? item.volume_24h_quote ?? item.volume ?? 0
+          )
+        }));
+
+        allPrices = [
+          ...allPrices,
+          ...applyRandomFluctuation(spot.data),
+          ...applyRandomFluctuation(futures.data)
+        ];
+      } catch (err) {
+        console.error(`Erro ao buscar ${exch}:`, err.message);
+      }
+    }
+
+
     // Lista de corretoras e suas URLs
     const exchanges = [
       {
@@ -157,18 +187,14 @@ async function fetchPrices() {
 
     const formatted = allPrices.map((item) => {
       const exchangeId = item.exchangeId?.toLowerCase() || item.exchange?.toLowerCase() || "";
-      const symbol = item.symbol?.toUpperCase() || "";
+      const symbol = item.symbol?.toUpperCase().replace(/[-_]/g, "") || "";
 
       return {
         exchange: exchangeId,
         symbol,
         price: parseFloat(item.price || item.lastPrice || item.last || 0),
         liquidity: parseFloat(
-          item.quoteVolume ??
-          item.amount24 ??
-          item.volume_24h_quote ??
-          item.volume ??
-          0
+          item.quoteVolume ?? item.amount24 ?? item.volume_24h_quote ?? item.volume ?? 0
         )
       };
     });

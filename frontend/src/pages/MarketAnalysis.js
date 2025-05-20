@@ -50,7 +50,6 @@ const MarketAnalysis = () => {
   const ws = useRef(null);
   const observerRef = useRef(null);
   const loadingRef = useRef(null);
-  const opportunitiesCache = useRef(new Map());
   const lastUpdateTime = useRef(new Map());
 
   const getLiquidityValue = (exchange, item) => {
@@ -141,19 +140,34 @@ const MarketAnalysis = () => {
       const updates = new Map();
 
       data.forEach((update) => {
-        const exchangeKey =
-          update.exchangeId?.toLowerCase() ||
-          update.exchangeName?.toLowerCase() ||
-          update.exchange?.toLowerCase() ||
-          "";
+        const normalizeExchange = (raw) => {
+          const key = raw?.toLowerCase();
+          if (key.includes("binance")) return "binance";
+          if (key.includes("mexc")) return "mexc";
+          if (key.includes("bitget")) return "bitget";
+          if (key.includes("kucoin")) return "kucoin";
+          if (key.includes("gateio")) return "gateio";
+          return key;
+        };
+        const exchangeKey = normalizeExchange(
+          update.exchangeId || update.exchangeName || update.exchange || ""
+        );
       
         const symbolKey = normalizeSymbol(update.symbol);
         const key = `${exchangeKey}-${symbolKey}`;
+
+        console.log("📦 Update recebido:", {
+          exchangeKey,
+          symbolKey,
+          key,
+          raw: update,
+        });
       
         //console.log("✅ Chave construída:", key);
       
         updates.set(key, {
           price: parseFloat(update.price),
+          liquidity: parseFloat(update.liquidity ?? 0),
           timestamp: now,
         });
 
@@ -190,8 +204,6 @@ const MarketAnalysis = () => {
       
           const liquidity1 = update1?.liquidity ?? opp.liquidity1;
           const liquidity2 = update2?.liquidity ?? opp.liquidity2;
-      
-          if (profit < MIN_PROFIT) return opp;
       
           const hasChanged =
             newPrice1 !== opp.price1 ||
@@ -575,9 +587,9 @@ const MarketAnalysis = () => {
                     const isSpotFutures = opp.type === "spot-futures";
 
                     if (onlyOneExchangeSelected) {
-                      return sameExchange && isSpotFutures;
+                      return sameExchange; // mostra tudo da mesma corretora
                     } else {
-                      return isSpotFutures;
+                      return true; // mostra todas oportunidades (spot-spot e spot-futures)
                     }
                   })
                   .map((opp) => (
