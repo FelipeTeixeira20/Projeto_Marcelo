@@ -117,7 +117,9 @@ async function fetchPrices() {
             ...item,
             exchangeId: exchange.id,
             exchangeName: exchange.name,
+            price: parseFloat(item.price) * (1 + (Math.random() * 0.03 - 0.015)) // ±1.5%
           }));
+          
 
           console.log(
             `✅ Recebidos ${taggedData.length} itens da ${exchange.name}`
@@ -152,8 +154,28 @@ async function fetchPrices() {
     }
 
     console.log(`Total de preços coletados: ${allPrices.length}`);
-    lastPrices = allPrices;
-    return allPrices;
+
+    const formatted = allPrices.map((item) => {
+      const exchangeId = item.exchangeId?.toLowerCase() || item.exchange?.toLowerCase() || "";
+      const symbol = item.symbol?.toUpperCase() || "";
+
+      return {
+        exchange: exchangeId,
+        symbol,
+        price: parseFloat(item.price || item.lastPrice || item.last || 0),
+        liquidity: parseFloat(
+          item.quoteVolume ??
+          item.amount24 ??
+          item.volume_24h_quote ??
+          item.volume ??
+          0
+        )
+      };
+    });
+
+lastPrices = formatted;
+return formatted;
+
   } catch (error) {
     console.error("Erro ao buscar preços das corretoras:", error.message);
     return null;

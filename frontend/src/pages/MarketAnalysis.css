@@ -655,3 +655,9 @@ tr {
   margin-top: 4px;
 }
 
+.highlight-update {
+  border: 2px solid #00ff00;
+  box-shadow: 0 0 10px #00ff00;
+  transition: border 0.3s ease, box-shadow 0.3s ease;
+}
+

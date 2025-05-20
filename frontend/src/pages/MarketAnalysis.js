@@ -40,6 +40,7 @@ const cleanFuturesSymbol = (exchange, symbol) => {
 
 
 const MarketAnalysis = () => {
+  const [recentlyUpdatedIds, setRecentlyUpdatedIds] = useState(new Set());
   const [opportunities, setOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -149,12 +150,25 @@ const MarketAnalysis = () => {
         const symbolKey = normalizeSymbol(update.symbol);
         const key = `${exchangeKey}-${symbolKey}`;
       
-        console.log("✅ Chave construída:", key);
+        //console.log("✅ Chave construída:", key);
       
         updates.set(key, {
           price: parseFloat(update.price),
           timestamp: now,
         });
+
+        const keysFromUpdates = Array.from(updates.keys());
+        const keysFromOpportunities = new Set(
+          opportunities.map((opp) => {
+            return `${opp.exchange1.toLowerCase()}-${normalizeSymbol(opp.symbol)}`;
+          })
+        );
+
+        const matchedKeys = keysFromUpdates.filter((key) =>
+          keysFromOpportunities.has(key)
+        );
+
+        console.log("🔎 Chaves que deram match com oportunidades:", matchedKeys);
       });    
 
       // Atualiza apenas se passou tempo suficiente desde a última atualização
@@ -185,23 +199,46 @@ const MarketAnalysis = () => {
             liquidity1 !== opp.liquidity1 ||
             liquidity2 !== opp.liquidity2;
       
-          if (hasChanged) {
-            lastUpdateTime.current.set(opp.id, now);
-            return {
-              ...opp,
-              price1: newPrice1,
-              price2: newPrice2,
-              liquidity1,
-              liquidity2,
-              profit,
-              timestamp: now,
-            };
-          }
+            if (hasChanged) {
+
+              console.log("🔁 Atualizando card:", {
+                id: opp.id,
+                old: { price1: opp.price1, price2: opp.price2 },
+                new: { price1: newPrice1, price2: newPrice2 },
+                profit,
+              });
+              lastUpdateTime.current.set(opp.id, now);
+            
+              // Adiciona o ID ao set de atualizados para destacar visualmente
+              setRecentlyUpdatedIds((prev) => {
+                const newSet = new Set(prev);
+                newSet.add(opp.id);
+                setTimeout(() => {
+                  setRecentlyUpdatedIds((prev) => {
+                    const temp = new Set(prev);
+                    temp.delete(opp.id);
+                    return temp;
+                  });
+                }, 1000); // Remove o destaque após 1s
+                return newSet;
+              });
+            
+              return {
+                ...opp,
+                price1: newPrice1,
+                price2: newPrice2,
+                liquidity1,
+                liquidity2,
+                profit,
+                timestamp: now,
+              };
+            }
+            
       
           return opp; // <- ESSENCIAL! Sempre retorna opp mesmo se não mudar
         });
       
-        return updated;
+        return [...updated];
       });     
     },
     [normalizeSymbol, calculateProfit]
@@ -437,6 +474,7 @@ const MarketAnalysis = () => {
       ws.current.onmessage = debounce((event) => {
         try {
           const data = JSON.parse(event.data);
+          console.log("📡 Dados recebidos via WebSocket:", data.slice(0, 3)); // apenas os 3 primeiros
           processWebSocketUpdate(data);
         } catch (error) {
           console.error("Erro ao processar mensagem do WebSocket:", error);
@@ -544,8 +582,8 @@ const MarketAnalysis = () => {
                   })
                   .map((opp) => (
                     <motion.div
-                      key={opp.id}
-                      className="opportunity-card"
+                    key={`${opp.id}-${opp.price1}-${opp.price2}`}
+                      className={`opportunity-card ${recentlyUpdatedIds.has(opp.id) ? "highlight-update" : ""}`}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -20 }}
