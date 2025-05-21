@@ -84,6 +84,20 @@ let updateInterval = null;
 // Log de IPs conectados
 const connectedClients = new Set();
 
+function normalizeSymbol(symbol) {
+  if (!symbol) return "";
+  const stablecoins = ["USDT", "USD", "BUSD", "USDC", "DAI", "TUSD", "FDUSD", "USDP", "USDD"];
+  let normalized = symbol.replace(/[-_]/g, "").toUpperCase();
+  for (const stablecoin of stablecoins) {
+    if (normalized.endsWith(stablecoin)) {
+      normalized = normalized.replace(stablecoin, "USDT");
+      break;
+    }
+  }
+  return normalized;
+}
+
+
 // Função para buscar preços de todas as corretoras
 async function fetchPrices() {
   try {
@@ -187,7 +201,7 @@ async function fetchPrices() {
 
     const formatted = allPrices.map((item) => {
       const exchangeId = item.exchangeId?.toLowerCase() || item.exchange?.toLowerCase() || "";
-      const symbol = item.symbol?.toUpperCase().replace(/[-_]/g, "") || "";
+      const symbol = normalizeSymbol(item.symbol);
 
       return {
         exchange: exchangeId,
