@@ -135,9 +135,10 @@ const Dashboard = () => {
       // Adicionar uma tag para identificar a corretora de origem e remover qualquer dado antigo
       const processedData = validData.map((crypto) => ({
         ...crypto,
+        id: `${crypto.symbol}_${selectedExchange.id}`, // ID único para o card
         exchangeId: selectedExchange.id,
         exchangeName: selectedExchange.name,
-        // Valores iniciais para animações
+        exchangeColor: selectedExchange.color, // Cor específica da exchange do card
         prevPrice: parseFloat(crypto.price),
         priceChange: null,
       }));
@@ -487,74 +488,118 @@ const Dashboard = () => {
     [cryptos.length, loading]
   );
 
-  const toggleFavorite = (symbol) => {
+  const toggleFavorite = (cryptoData) => {
     const username = getLoggedInUsername();
-    if (!username) return; // Não fazer nada se não houver usuário
+    if (!username) return;
     const favoritesKey = `favorites_${username}`;
 
+    const favoriteId = `${cryptoData.symbol}_${cryptoData.exchangeId}`;
+
     setFavorites((prev) => {
-      const isCurrentlyFavorite = prev.includes(symbol);
-      const newFavoritesSymbols = isCurrentlyFavorite
-        ? prev.filter((fav) => fav !== symbol)
-        : [...prev, symbol];
+      const isCurrentlyFavoriteInState = prev.some(
+        (fav) => fav.id === favoriteId
+      );
+      let newFavoritesState;
 
-      // Encontrar os dados completos da moeda
-      const coinData = cryptos.find((crypto) => crypto.symbol === symbol);
+      if (isCurrentlyFavoriteInState) {
+        newFavoritesState = prev.filter((fav) => fav.id !== favoriteId);
+      } else {
+        newFavoritesState = [
+          ...prev,
+          {
+            id: favoriteId,
+            symbol: cryptoData.symbol,
+            exchangeId: cryptoData.exchangeId,
+          },
+        ];
+      }
 
-      // Recuperar favoritos existentes do localStorage para o usuário atual
       const storedUserFavorites =
         JSON.parse(localStorage.getItem(favoritesKey)) || [];
-
-      if (isCurrentlyFavorite) {
-        // Remover dos favoritos
+      if (isCurrentlyFavoriteInState) {
+        // Significa que queremos remover do localStorage
         const updatedUserFavorites = storedUserFavorites.filter(
-          (fav) => fav.symbol !== symbol
+          (fav) =>
+            !(
+              fav.symbol === cryptoData.symbol &&
+              fav.exchangeId === cryptoData.exchangeId
+            )
         );
         localStorage.setItem(
           favoritesKey,
           JSON.stringify(updatedUserFavorites)
         );
       } else {
-        // Adicionar aos favoritos
-        if (coinData) {
-          // Apenas adicionar se tivermos os dados da moeda
-          const favoriteData = {
-            id: symbol, // Usar symbol como ID se não houver um específico
-            symbol: coinData.symbol,
-            name: coinData.name || coinData.symbol, // Usar nome se disponível, senão symbol
-            image:
-              coinData.image ||
-              `https://s2.coinmarketcap.com/static/img/coins/64x64/${
-                coinData.id || "1"
-              }.png`, // Usar imagem se disponível
-            current_price: parseFloat(coinData.price),
-            // Adicionar outros campos relevantes se disponíveis em coinData
-            exchangeId: coinData.exchangeId,
-            exchangeName: coinData.exchangeName,
-          };
+        // Significa que queremos adicionar ao localStorage
+        const favoriteToStore = {
+          id: favoriteId,
+          symbol: cryptoData.symbol,
+          name: cryptoData.name || cryptoData.symbol,
+          image:
+            cryptoData.image ||
+            `https://s2.coinmarketcap.com/static/img/coins/64x64/${
+              cryptoData.id || "1"
+            }.png`,
+          current_price: parseFloat(cryptoData.price),
+          exchangeId: cryptoData.exchangeId,
+          exchangeName: cryptoData.exchangeName,
+          // Adicionar exchangeColor ao objeto salvo se cryptoData tiver, ou buscar em 'exchanges'
+          exchangeColor:
+            cryptoData.exchangeColor ||
+            (exchanges.find((ex) => ex.id === cryptoData.exchangeId) || {})
+              .color,
+        };
+        // Evitar duplicatas no localStorage
+        const itemExistsInStorage = storedUserFavorites.some(
+          (fav) => fav.id === favoriteId
+        );
+        if (!itemExistsInStorage) {
           localStorage.setItem(
             favoritesKey,
-            JSON.stringify([...storedUserFavorites, favoriteData])
+            JSON.stringify([...storedUserFavorites, favoriteToStore])
           );
         } else {
+          // Opcional: Atualizar o item existente se necessário, por exemplo, o preço.
+          // Por agora, apenas não adicionamos duplicado.
           console.warn(
-            `Dados não encontrados para ${symbol}, não foi possível adicionar aos favoritos.`
+            "Favorito já existe no localStorage, não adicionando duplicata."
           );
         }
       }
-      return newFavoritesSymbols;
+      return newFavoritesState;
     });
   };
 
-  // Também precisamos carregar os favoritos quando o componente montar
   useEffect(() => {
     const username = getLoggedInUsername();
     if (!username) return;
     const favoritesKey = `favorites_${username}`;
-
     const storedUserFavorites =
       JSON.parse(localStorage.getItem(favoritesKey)) || [];
-    setFavorites(storedUserFavorites.map((fav) => fav.symbol)); // Guardamos apenas os símbolos no estado
+
+    // Garantir unicidade usando Map pelo 'id' composto e que 'id' está presente
+    const uniqueFavorites = Array.from(
+      new Map(
+        storedUserFavorites.map((item) => [
+          item.id || `${item.symbol}_${item.exchangeId}`, // Chave do Map
+          {
+            ...item,
+            id: item.id || `${item.symbol}_${item.exchangeId}`, // Valor do Map, garantindo 'id'
+            // Assegurar que os campos necessários para o estado do Dashboard (id, symbol, exchangeId) estão aqui
+            symbol: item.symbol,
+            exchangeId: item.exchangeId,
+          },
+        ])
+      ).values()
+    );
+
+    setFavorites(
+      uniqueFavorites.map((fav) => ({
+        id: fav.id,
+        symbol: fav.symbol,
+        exchangeId: fav.exchangeId,
+      }))
+    );
   }, []);
 
   // 🔄 Filtrando criptomoedas conforme a busca e verificando se pertence à corretora atual
@@ -943,27 +988,38 @@ const Dashboard = () => {
               ) : (
                 sortedCryptos.slice(0, visibleCryptos).map((crypto, index) => (
                   <div
-                    key={crypto.symbol}
+                    key={crypto.id || `${crypto.symbol}_${crypto.exchangeId}`}
                     ref={
                       index === visibleCryptos - 1 ? lastCryptoElementRef : null
                     }
                     className={`crypto-card ${
                       priceChanges[crypto.symbol] || ""
-                    } ${favorites.includes(crypto.symbol) ? "favorited" : ""}`}
+                    } ${
+                      favorites.some(
+                        (fav) =>
+                          fav.symbol === crypto.symbol &&
+                          fav.exchangeId === crypto.exchangeId
+                      )
+                        ? "favorited"
+                        : ""
+                    }`}
                     onClick={() => handleCardClick(crypto.symbol)}
                   >
                     <button
                       className="favorite-button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        toggleFavorite(crypto.symbol);
+                        toggleFavorite(crypto);
                       }}
                     >
                       <FaStar />
                     </button>
                     <span
                       className="exchange-tag"
-                      style={{ backgroundColor: selectedExchange.color }}
+                      style={{
+                        backgroundColor:
+                          crypto.exchangeColor || selectedExchange.color,
+                      }}
                     >
                       {crypto.exchangeName || selectedExchange.name}
                     </span>

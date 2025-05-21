@@ -11,6 +11,15 @@ const SERVER_URL =
     ? "192.168.100.26"
     : window.location.hostname;
 
+// 🔥 Lista de exchanges disponíveis (copiada do Dashboard.js)
+const exchanges = [
+  { id: "mexc", name: "MEXC", color: "#FF0000" }, // Red for MEXC
+  { id: "binance", name: "Binance", color: "#F3BA2F" }, // Yellow for Binance
+  { id: "bitget", name: "Bitget", color: "#00FF7F" }, // Green for Bitget
+  { id: "gateio", name: "Gate.io", color: "#00AA00" }, // Dark Green for Gate.io
+  { id: "kucoin", name: "KuCoin", color: "#0052FF" }, // Blue for KuCoin
+];
+
 const Favorites = () => {
   const [favorites, setFavorites] = useState([]);
   const [selectedCrypto, setSelectedCrypto] = useState(null);
@@ -35,22 +44,33 @@ const Favorites = () => {
     const loadFavorites = () => {
       const username = getLoggedInUsername();
       if (!username) {
-        setFavorites([]); // Nenhum usuário logado, nenhum favorito para mostrar
+        setFavorites([]);
         return;
       }
       try {
         const favoritesKey = `favorites_${username}`;
-        const storedFavorites =
+        let storedFavorites =
           JSON.parse(localStorage.getItem(favoritesKey)) || [];
-        const uniqueFavorites = Array.from(
-          new Map(storedFavorites.map((item) => [item.symbol, item])).values()
-        );
-        setFavorites(uniqueFavorites);
 
-        // Extrair corretoras únicas dos favoritos
+        // Garantir unicidade usando Map pelo 'id' composto e que 'id' está presente
+        // Também garante que cada favorito tenha um 'id' normalizado
+        storedFavorites = Array.from(
+          new Map(
+            storedFavorites.map((item) => [
+              item.id || `${item.symbol}_${item.exchangeId}`, // Chave do Map
+              {
+                ...item,
+                id: item.id || `${item.symbol}_${item.exchangeId}`, // Valor do Map, garantindo 'id'
+              },
+            ])
+          ).values()
+        );
+
+        setFavorites(storedFavorites);
+
         const exchanges = [
           ...new Set(
-            uniqueFavorites.map((fav) => fav.exchangeName).filter(Boolean)
+            storedFavorites.map((fav) => fav.exchangeName).filter(Boolean)
           ),
         ];
         setExchangesInFavorites(exchanges.sort());
@@ -146,14 +166,30 @@ const Favorites = () => {
     };
   }, []);
 
-  const handleUnfavorite = (symbol) => {
+  const handleUnfavorite = (symbol, exchangeId) => {
     const username = getLoggedInUsername();
-    if (!username) return; // Não fazer nada se não houver usuário
+    if (!username) return;
 
-    const updatedFavorites = favorites.filter((fav) => fav.symbol !== symbol);
+    const favoriteIdToRemove = `${symbol}_${exchangeId}`;
+
+    const updatedFavorites = favorites.filter(
+      (fav) =>
+        (fav.id || `${fav.symbol}_${fav.exchangeId}`) !== favoriteIdToRemove
+    );
     setFavorites(updatedFavorites);
+
     const favoritesKey = `favorites_${username}`;
-    localStorage.setItem(favoritesKey, JSON.stringify(updatedFavorites));
+    // Também atualiza o localStorage, filtrando pelo ID composto
+    const storedUserFavorites =
+      JSON.parse(localStorage.getItem(favoritesKey)) || [];
+    const updatedUserFavoritesForStorage = storedUserFavorites.filter(
+      (fav) =>
+        (fav.id || `${fav.symbol}_${fav.exchangeId}`) !== favoriteIdToRemove
+    );
+    localStorage.setItem(
+      favoritesKey,
+      JSON.stringify(updatedUserFavoritesForStorage)
+    );
   };
 
   const handleCardClick = async (symbol) => {
@@ -265,7 +301,7 @@ const Favorites = () => {
           <div className="favorites-grid">
             {processedFavorites.map((coin) => (
               <div
-                key={coin.symbol}
+                key={coin.id || `${coin.symbol}_${coin.exchangeId}`}
                 className={`favorites-card ${priceChanges[coin.symbol] || ""}`}
                 onClick={() => handleCardClick(coin.symbol)}
               >
@@ -273,11 +309,23 @@ const Favorites = () => {
                   className="favorite-button favorited"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleUnfavorite(coin.symbol);
+                    handleUnfavorite(coin.symbol, coin.exchangeId);
                   }}
                 >
                   <FaStar color="gold" />
                 </button>
+                {coin.exchangeName && (
+                  <span
+                    className="exchange-name"
+                    style={{
+                      backgroundColor:
+                        exchanges.find((ex) => ex.name === coin.exchangeName)
+                          ?.color || "rgba(0, 0, 0, 0.5)",
+                    }}
+                  >
+                    {coin.exchangeName}
+                  </span>
+                )}
                 <h3>{coin.symbol}</h3>
                 <p className="favorites-price">
                   ${parseFloat(coin.current_price).toFixed(4)}
