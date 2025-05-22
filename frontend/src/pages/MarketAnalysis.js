@@ -38,7 +38,6 @@ const cleanFuturesSymbol = (exchange, symbol) => {
   return symbol;
 };
 
-
 const MarketAnalysis = () => {
   const [recentlyUpdatedIds, setRecentlyUpdatedIds] = useState(new Set());
   const [opportunities, setOpportunities] = useState([]);
@@ -51,25 +50,6 @@ const MarketAnalysis = () => {
   const observerRef = useRef(null);
   const loadingRef = useRef(null);
   const lastUpdateTime = useRef(new Map());
-
-  const getLiquidityValue = (exchange, item) => {
-    if (!item) return 0;
-  
-    switch (exchange) {
-      case "binance":
-      case "bitget":
-        return parseFloat(item.quoteVolume ?? 0);
-      case "mexc":
-        return parseFloat(item.amount24 ?? 0);
-      case "gateio":
-        return parseFloat(item.volume_24h_quote ?? 0);
-      case "kucoin":
-        // Se for futures da KuCoin, o campo é quoteVolume (igual ao bitget/binance)
-        return parseFloat(item.quoteVolume ?? item.volume ?? 0);
-      default:
-        return 0;
-    }
-  };
 
   // Função para normalizar símbolos (memoizada)
   const normalizeSymbol = useMemo(() => {
@@ -112,27 +92,6 @@ const MarketAnalysis = () => {
     };
   }, []);
 
-  // Filtragem de oportunidades otimizada
-  const filteredOpportunities = useMemo(() => {
-    if (!searchTerm && selectedExchanges.length === 0) return [];
-  
-    return opportunities
-      .filter((opp) => {
-        const normalizedSearch = normalizeSymbol(searchTerm);
-        const normalizedSymbol = normalizeSymbol(opp.symbol);
-  
-        const matchesSearch =
-          !searchTerm || normalizedSymbol.includes(normalizedSearch);
-  
-        const matchesExchanges =
-          selectedExchanges.includes(opp.exchange1) ||
-          selectedExchanges.includes(opp.exchange2);
-  
-        return matchesSearch && matchesExchanges;
-      })
-      .slice(0, visibleCount);
-  }, [opportunities, searchTerm, selectedExchanges, visibleCount, normalizeSymbol]);
-
   // Função para processar dados do WebSocket de forma otimizada
   const processWebSocketUpdate = useCallback(
     (data) => {
@@ -152,122 +111,146 @@ const MarketAnalysis = () => {
         const exchangeKey = normalizeExchange(
           update.exchangeId || update.exchangeName || update.exchange || ""
         );
-      
+
         const symbolKey = normalizeSymbol(update.symbol);
         const key = `${exchangeKey}-${symbolKey}`;
 
-        console.log("📦 Update recebido:", {
-          exchangeKey,
-          symbolKey,
-          key,
-          raw: update,
-        });
-      
-        //console.log("✅ Chave construída:", key);
-      
         updates.set(key, {
           price: parseFloat(update.price),
           liquidity: parseFloat(update.liquidity ?? 0),
           timestamp: now,
         });
+      });
 
-        const keysFromUpdates = Array.from(updates.keys());
-        const keysFromOpportunities = new Set(
-          opportunities.map((opp) => {
-            return `${opp.exchange1.toLowerCase()}-${normalizeSymbol(opp.symbol)}`;
-          })
-        );
-
-        const matchedKeys = keysFromUpdates.filter((key) =>
-          keysFromOpportunities.has(key)
-        );
-
-        console.log("🔎 Chaves que deram match com oportunidades:", matchedKeys);
-      });    
-
-      // Atualiza apenas se passou tempo suficiente desde a última atualização
-      setOpportunities((prev) => {
-        const updated = prev.map((opp) => {
-          const key1 = `${opp.exchange1.toLowerCase()}-${normalizeSymbol(opp.symbol)}`;
-          const key2 = `${opp.exchange2.toLowerCase()}-${normalizeSymbol(opp.symbol)}`;
+      setOpportunities((prevOpps) => {
+        let hasChangedOverall = false;
+        const updatedOpps = prevOpps.map((opp) => {
+          const key1 = `${opp.exchange1.toLowerCase()}-${normalizeSymbol(
+            opp.symbol
+          )}`;
+          const key2 = `${opp.exchange2.toLowerCase()}-${normalizeSymbol(
+            opp.symbol
+          )}`;
           const update1 = updates.get(key1);
           const update2 = updates.get(key2);
-      
+
           if (!update1 && !update2) return opp;
-      
-          const lastUpdate = lastUpdateTime.current.get(opp.id) || 0;
-          if (now - lastUpdate < 1000) return opp;
-      
+
           const newPrice1 = update1 ? update1.price : opp.price1;
           const newPrice2 = update2 ? update2.price : opp.price2;
-          const profit = calculateProfit(newPrice1, newPrice2);
-      
+
+          let newProfit = opp.profit;
+          if (
+            (update1 && newPrice1 !== opp.price1) ||
+            (update2 && newPrice2 !== opp.price2)
+          ) {
+            newProfit = calculateProfit(newPrice1, newPrice2);
+          }
+
           const liquidity1 = update1?.liquidity ?? opp.liquidity1;
           const liquidity2 = update2?.liquidity ?? opp.liquidity2;
-      
-          const hasChanged =
-            newPrice1 !== opp.price1 ||
-            newPrice2 !== opp.price2 ||
-            liquidity1 !== opp.liquidity1 ||
-            liquidity2 !== opp.liquidity2;
-      
-            if (hasChanged) {
 
-              console.log("🔁 Atualizando card:", {
-                id: opp.id,
-                old: { price1: opp.price1, price2: opp.price2 },
-                new: { price1: newPrice1, price2: newPrice2 },
-                profit,
-              });
-              lastUpdateTime.current.set(opp.id, now);
-            
-              // Adiciona o ID ao set de atualizados para destacar visualmente
-              setRecentlyUpdatedIds((prev) => {
-                const newSet = new Set(prev);
-                newSet.add(opp.id);
-                setTimeout(() => {
-                  setRecentlyUpdatedIds((prev) => {
-                    const temp = new Set(prev);
-                    temp.delete(opp.id);
-                    return temp;
-                  });
-                }, 1000); // Remove o destaque após 1s
-                return newSet;
-              });
-            
-              return {
-                ...opp,
-                price1: newPrice1,
-                price2: newPrice2,
-                liquidity1,
-                liquidity2,
-                profit,
-                timestamp: now,
-              };
-            }
-            
-      
-          return opp; // <- ESSENCIAL! Sempre retorna opp mesmo se não mudar
+          const pricesChanged =
+            newPrice1 !== opp.price1 || newPrice2 !== opp.price2;
+          const liquidityChanged =
+            liquidity1 !== opp.liquidity1 || liquidity2 !== opp.liquidity2;
+
+          if (pricesChanged || liquidityChanged) {
+            lastUpdateTime.current.set(opp.id, now);
+            hasChangedOverall = true;
+
+            setRecentlyUpdatedIds((prevRecentIds) => {
+              const newSet = new Set(prevRecentIds);
+              newSet.add(opp.id);
+              setTimeout(() => {
+                setRecentlyUpdatedIds((currentRecentIds) => {
+                  const temp = new Set(currentRecentIds);
+                  temp.delete(opp.id);
+                  return temp;
+                });
+              }, 1000); // Remove o destaque após 1s
+              return newSet;
+            });
+
+            return {
+              ...opp,
+              price1: newPrice1,
+              price2: newPrice2,
+              liquidity1,
+              liquidity2,
+              profit: newProfit,
+              timestamp: now,
+            };
+          }
+          return opp;
         });
-      
-        return [...updated];
-      });     
+
+        return hasChangedOverall ? updatedOpps : prevOpps;
+      });
     },
-    [normalizeSymbol, calculateProfit]
+    [normalizeSymbol, calculateProfit, setOpportunities, setRecentlyUpdatedIds]
   );
+
+  const processWebSocketUpdateRef = useRef(processWebSocketUpdate); // Agora pode ser inicializada diretamente
+
+  const getLiquidityValue = (exchange, item) => {
+    if (!item) return 0;
+
+    switch (exchange) {
+      case "binance":
+      case "bitget":
+        return parseFloat(item.quoteVolume ?? 0);
+      case "mexc":
+        return parseFloat(item.amount24 ?? 0);
+      case "gateio":
+        return parseFloat(item.volume_24h_quote ?? 0);
+      case "kucoin":
+        // Se for futures da KuCoin, o campo é quoteVolume (igual ao bitget/binance)
+        return parseFloat(item.quoteVolume ?? item.volume ?? 0);
+      default:
+        return 0;
+    }
+  };
+
+  // Filtragem de oportunidades otimizada
+  const filteredOpportunities = useMemo(() => {
+    if (!searchTerm && selectedExchanges.length === 0) return [];
+
+    return opportunities
+      .filter((opp) => {
+        const normalizedSearch = normalizeSymbol(searchTerm);
+        const normalizedSymbol = normalizeSymbol(opp.symbol);
+
+        const matchesSearch =
+          !searchTerm || normalizedSymbol.includes(normalizedSearch);
+
+        const matchesExchanges =
+          selectedExchanges.includes(opp.exchange1) ||
+          selectedExchanges.includes(opp.exchange2);
+
+        return matchesSearch && matchesExchanges;
+      })
+      .slice(0, visibleCount);
+  }, [
+    opportunities,
+    searchTerm,
+    selectedExchanges,
+    visibleCount,
+    normalizeSymbol,
+  ]);
+
   const getFuturesSymbol = (exchange, item) => {
     if (exchange === "gateio") return item.contract;
     if (exchange === "kucoin") return item.symbol;
     return item.symbol;
   };
-  
-  
+
   const getFuturesPrice = (exchange, item) => {
     if (exchange === "gateio") return item.last;
     if (exchange === "kucoin") return item.price;
     return item.last ?? item.lastPrice; // <- aqui!! se não for gateio nem kucoin, usa a lógica que você falou
   };
-  
+
   // Função para buscar dados iniciais de forma otimizada
   const fetchInitialData = useCallback(async () => {
     try {
@@ -319,9 +302,13 @@ const MarketAnalysis = () => {
               const normalizedSymbolSpot = normalizeSymbol(spotItem1.symbol);
 
               data1.futures?.forEach((futuresItem1) => {
-                const normalizedFuturesSymbol = normalizeSymbol(cleanFuturesSymbol(exchange1, getFuturesSymbol(exchange1, futuresItem1)));
+                const normalizedFuturesSymbol = normalizeSymbol(
+                  cleanFuturesSymbol(
+                    exchange1,
+                    getFuturesSymbol(exchange1, futuresItem1)
+                  )
+                );
                 if (normalizedFuturesSymbol === normalizedSymbolSpot) {
-
                   console.log("MATCH encontrado!", {
                     corretora: exchange1,
                     symbolSpot: spotItem1.symbol,
@@ -330,7 +317,9 @@ const MarketAnalysis = () => {
                     priceFutures: futuresItem1.lastPrice,
                   });
                   const spotPrice = parseFloat(spotItem1.price);
-                  const futuresPrice = parseFloat(getFuturesPrice(exchange1, futuresItem1));
+                  const futuresPrice = parseFloat(
+                    getFuturesPrice(exchange1, futuresItem1)
+                  );
 
                   if (isNaN(spotPrice) || isNaN(futuresPrice)) {
                     return; // Não cria se não tiver preço válido
@@ -353,7 +342,7 @@ const MarketAnalysis = () => {
                         timestamp: Date.now(),
                         liquidity1: getLiquidityValue(exchange1, spotItem1),
                         liquidity2: getLiquidityValue(exchange2, futuresItem1),
-                      });                                 
+                      });
                       processedPairs.add(id);
                     }
                   }
@@ -368,7 +357,9 @@ const MarketAnalysis = () => {
               const normalizedSymbolSpot = normalizeSymbol(spotItem1.symbol);
 
               data2.spot?.forEach((spotItem2) => {
-                if (normalizeSymbol(spotItem2.symbol) === normalizedSymbolSpot) {
+                if (
+                  normalizeSymbol(spotItem2.symbol) === normalizedSymbolSpot
+                ) {
                   const profit = calculateProfit(
                     parseFloat(spotItem1.price),
                     parseFloat(spotItem2.price)
@@ -388,8 +379,8 @@ const MarketAnalysis = () => {
                         profit,
                         timestamp: Date.now(),
                         liquidity1: getLiquidityValue(exchange1, spotItem1),
-                        liquidity2: getLiquidityValue(exchange2, spotItem2),                       
-                      });                      
+                        liquidity2: getLiquidityValue(exchange2, spotItem2),
+                      });
                       processedPairs.add(id);
                     }
                   }
@@ -398,18 +389,24 @@ const MarketAnalysis = () => {
 
               // Spot vs Futures entre exchanges
               data2.futures?.forEach((futuresItem2) => {
-                const normalizedFuturesSymbol2 = normalizeSymbol(cleanFuturesSymbol(exchange2, getFuturesSymbol(exchange2, futuresItem2)));
+                const normalizedFuturesSymbol2 = normalizeSymbol(
+                  cleanFuturesSymbol(
+                    exchange2,
+                    getFuturesSymbol(exchange2, futuresItem2)
+                  )
+                );
                 if (normalizedFuturesSymbol2 === normalizedSymbolSpot) {
-
                   const spotPrice = parseFloat(spotItem1.price);
-                  const futuresPrice = parseFloat(getFuturesPrice(exchange2, futuresItem2));
+                  const futuresPrice = parseFloat(
+                    getFuturesPrice(exchange2, futuresItem2)
+                  );
 
                   if (isNaN(spotPrice) || isNaN(futuresPrice)) {
                     return; // pula se algum preço estiver inválido
                   }
 
                   const profit = calculateProfit(spotPrice, futuresPrice);
- 
+
                   if (profit >= MIN_PROFIT) {
                     const id = `${exchange1}-${exchange2}-${normalizedSymbolSpot}-sf`;
                     if (!processedPairs.has(id)) {
@@ -424,8 +421,8 @@ const MarketAnalysis = () => {
                         profit,
                         timestamp: Date.now(),
                         liquidity1: getLiquidityValue(exchange1, spotItem1),
-                        liquidity2: getLiquidityValue(exchange2, futuresItem2),                        
-                      });                      
+                        liquidity2: getLiquidityValue(exchange2, futuresItem2),
+                      });
                       processedPairs.add(id);
                     }
                   }
@@ -468,51 +465,147 @@ const MarketAnalysis = () => {
     };
   }, []);
 
+  // Efeito para buscar dados iniciais quando as exchanges selecionadas mudam
+  useEffect(() => {
+    fetchInitialData();
+  }, [fetchInitialData]); // fetchInitialData já é um useCallback com selectedExchanges como dep.
+
   // Conexão WebSocket otimizada
   useEffect(() => {
-    const connectWebSocket = () => {
-      if (ws.current) {
-        ws.current.close();
+    // selectedExchangesRef.current é atualizado em outro useEffect se necessário,
+    // mas aqui vamos focar na conexão e no processamento geral.
+    console.log(
+      `[Market WebSocket Setup useEffect] Configurando WebSocket. Servidor: ${SERVER_URL}`
+    );
+
+    const wsUrl = `ws://${SERVER_URL}:5000/ws`;
+    let currentWs = null; // Variável local para o socket da instância atual do useEffect
+
+    const connect = () => {
+      // Fecha conexão anterior se existir e pertencer a esta instância do useEffect
+      if (currentWs && currentWs.readyState !== WebSocket.CLOSED) {
+        console.log(
+          "[Market WebSocket Cleanup] Tentando fechar conexão WebSocket existente antes de reconectar."
+        );
+        currentWs.onclose = null; // Evitar trigger de reconexão da instância antiga
+        currentWs.onerror = null;
+        currentWs.onmessage = null;
+        currentWs.onopen = null;
+        currentWs.close();
       }
 
-      const wsUrl = `ws://localhost:5000/ws`; // forçado para localhost
-      ws.current = new WebSocket(wsUrl);
+      console.log(
+        `[Market WebSocket Setup] Criando nova instância WebSocket para ${wsUrl}...`
+      );
+      currentWs = new WebSocket(wsUrl);
+      ws.current = currentWs; // Atualiza a ref global
 
-      ws.current.onopen = () => {
-        console.log("WebSocket conectado");
+      const socketInstance = currentWs; // Captura a instância atual para os callbacks
+
+      socketInstance.onopen = () => {
+        if (ws.current !== socketInstance) {
+          console.log(
+            "[Market WebSocket onopen] Evento de socket obsoleto ignorado."
+          );
+          return;
+        }
+        console.log(`[Market WebSocket onopen] Conectado a ${wsUrl}`);
         setWsConnected(true);
       };
 
-      ws.current.onmessage = debounce((event) => {
+      socketInstance.onmessage = debounce((event) => {
+        if (ws.current !== socketInstance) {
+          console.log(
+            "[Market WebSocket onmessage] Evento de socket obsoleto ignorado."
+          );
+          return;
+        }
         try {
           const data = JSON.parse(event.data);
-          console.log("📡 Dados recebidos via WebSocket:", data.slice(0, 3)); // apenas os 3 primeiros
-          processWebSocketUpdate(data);
+          // console.log("📡 Dados recebidos via WebSocket (Market):", data.length > 3 ? data.slice(0, 3) : data);
+          if (processWebSocketUpdateRef.current) {
+            processWebSocketUpdateRef.current(data);
+          }
         } catch (error) {
-          console.error("Erro ao processar mensagem do WebSocket:", error);
+          console.error(
+            "[Market WebSocket onmessage] Erro ao processar mensagem:",
+            error
+          );
         }
-      }, 100);
+      }, 100); // Debounce continua útil
 
-      ws.current.onclose = () => {
+      socketInstance.onclose = () => {
+        if (ws.current !== socketInstance) {
+          console.log(
+            "[Market WebSocket onclose] Evento de socket obsoleto ignorado."
+          );
+          return;
+        }
+        console.log(`[Market WebSocket onclose] Desconectado de ${wsUrl}`);
         setWsConnected(false);
-        setTimeout(connectWebSocket, 5000);
+        // Tenta reconectar após 5 segundos apenas se este socket ainda for o ws.current
+        // E se não estivermos no processo de desmontagem (ver limpeza do useEffect)
+        if (ws.current === socketInstance) {
+          console.log(
+            "[Market WebSocket onclose] Tentando reconectar em 5 segundos..."
+          );
+          setTimeout(connect, 5000);
+        }
       };
 
-      ws.current.onerror = (error) => {
-        console.error("Erro no WebSocket:", error);
+      socketInstance.onerror = (error) => {
+        if (ws.current !== socketInstance) {
+          console.log(
+            "[Market WebSocket onerror] Evento de socket obsoleto ignorado."
+          );
+          return;
+        }
+        console.error("[Market WebSocket onerror] Erro:", error);
         setWsConnected(false);
+        // O onclose será chamado, então a lógica de reconexão está lá.
       };
     };
 
-    connectWebSocket();
-    fetchInitialData();
+    // connect(); // Chamada original comentada para teste
+
+    // Atrasar a conexão inicial para diagnóstico
+    console.log(
+      "[Market WebSocket Setup useEffect] Agendando conexão inicial com atraso de 100ms."
+    );
+    const initialConnectTimeout = setTimeout(() => {
+      console.log(
+        "[Market WebSocket Setup useEffect] Timeout disparado. Tentando conectar..."
+      );
+      connect();
+    }, 100);
 
     return () => {
-      if (ws.current) {
-        ws.current.close();
+      clearTimeout(initialConnectTimeout); // Limpar o timeout se o componente desmontar antes
+      console.log("[Market WebSocket Cleanup useEffect] Limpando WebSocket.");
+      if (ws.current && ws.current.readyState !== WebSocket.CLOSED) {
+        // Define ws.current como null ANTES de fechar para que o onclose não tente reconectar
+        const socketToClose = ws.current;
+        ws.current = null;
+        socketToClose.onclose = null;
+        socketToClose.onerror = null;
+        socketToClose.onmessage = null;
+        socketToClose.onopen = null;
+        socketToClose.close();
+        console.log(
+          "[Market WebSocket Cleanup useEffect] Conexão WebSocket fechada."
+        );
+      } else if (ws.current) {
+        console.log(
+          `[Market WebSocket Cleanup useEffect] WebSocket não estava OPEN (estado: ${ws.current.readyState}). Apenas definindo ws.current como null.`
+        );
+        ws.current = null;
+      } else {
+        console.log(
+          "[Market WebSocket Cleanup useEffect] Nenhuma conexão WebSocket para limpar (ws.current já é null)."
+        );
       }
     };
-  }, [fetchInitialData, processWebSocketUpdate]);
+  }, [SERVER_URL]); // Depende apenas de SERVER_URL e da ref de processWebSocketUpdate (que é estável)
 
   // Handler para pesquisa otimizado
   const handleSearch = debounce((value) => {
@@ -582,7 +675,8 @@ const MarketAnalysis = () => {
               <div className="opportunities-grid">
                 {filteredOpportunities
                   .filter((opp) => {
-                    const onlyOneExchangeSelected = selectedExchanges.length === 1;
+                    const onlyOneExchangeSelected =
+                      selectedExchanges.length === 1;
                     const sameExchange = opp.exchange1 === opp.exchange2;
                     const isSpotFutures = opp.type === "spot-futures";
 
@@ -594,8 +688,10 @@ const MarketAnalysis = () => {
                   })
                   .map((opp) => (
                     <motion.div
-                    key={`${opp.id}-${opp.price1}-${opp.price2}`}
-                      className={`opportunity-card ${recentlyUpdatedIds.has(opp.id) ? "highlight-update" : ""}`}
+                      key={`${opp.id}-${opp.price1}-${opp.price2}`}
+                      className={`opportunity-card ${
+                        recentlyUpdatedIds.has(opp.id) ? "highlight-update" : ""
+                      }`}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -20 }}
@@ -607,34 +703,40 @@ const MarketAnalysis = () => {
                         <span className="profit">{opp.profit.toFixed(2)}%</span>
                       </div>
                       <div className="card-body">
-                      <div className="exchange-info">
-                        <div className="exchange">
-                          <span className="label">{opp.exchange1}</span>
-                          <span className="price">${opp.price1.toFixed(4)}</span>
-                          {opp.liquidity1 > 0 && (
-                            <span className="liquidity">
-                              💧 {opp.liquidity1.toLocaleString("en-US", {
-                                style: "currency",
-                                currency: "USD",
-                                maximumFractionDigits: 0,
-                              })}
+                        <div className="exchange-info">
+                          <div className="exchange">
+                            <span className="label">{opp.exchange1}</span>
+                            <span className="price">
+                              ${opp.price1.toFixed(4)}
                             </span>
-                          )}
-                        </div>
-                        <div className="exchange">
-                          <span className="label">{opp.exchange2}</span>
-                          <span className="price">${opp.price2.toFixed(4)}</span>
-                          {opp.liquidity2 > 0 && (
-                            <span className="liquidity">
-                              💧 {opp.liquidity2.toLocaleString("en-US", {
-                                style: "currency",
-                                currency: "USD",
-                                maximumFractionDigits: 0,
-                              })}
+                            {opp.liquidity1 > 0 && (
+                              <span className="liquidity">
+                                💧{" "}
+                                {opp.liquidity1.toLocaleString("en-US", {
+                                  style: "currency",
+                                  currency: "USD",
+                                  maximumFractionDigits: 0,
+                                })}
+                              </span>
+                            )}
+                          </div>
+                          <div className="exchange">
+                            <span className="label">{opp.exchange2}</span>
+                            <span className="price">
+                              ${opp.price2.toFixed(4)}
                             </span>
-                          )}
+                            {opp.liquidity2 > 0 && (
+                              <span className="liquidity">
+                                💧{" "}
+                                {opp.liquidity2.toLocaleString("en-US", {
+                                  style: "currency",
+                                  currency: "USD",
+                                  maximumFractionDigits: 0,
+                                })}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
                         <div className="type-badge">{opp.type}</div>
                       </div>
                     </motion.div>

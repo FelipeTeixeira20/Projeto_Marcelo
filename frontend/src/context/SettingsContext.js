@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect } from "react";
+import React, { createContext, useState, useEffect, useMemo } from "react";
 
 // Criando o contexto
 export const SettingsContext = createContext();
@@ -29,10 +29,31 @@ export const SettingsProvider = ({ children }) => {
     document.body.classList.toggle("dark-mode", darkMode);
   }, [darkMode, notifications, language, currency]);
 
+  const contextValue = useMemo(
+    () => ({
+      darkMode,
+      setDarkMode,
+      notifications,
+      setNotifications,
+      language,
+      setLanguage,
+      currency,
+      setCurrency,
+    }),
+    [
+      darkMode,
+      notifications,
+      language,
+      currency,
+      setDarkMode,
+      setNotifications,
+      setLanguage,
+      setCurrency,
+    ]
+  );
+
   return (
-    <SettingsContext.Provider
-      value={{ darkMode, setDarkMode, notifications, setNotifications, language, setLanguage, currency, setCurrency }}
-    >
+    <SettingsContext.Provider value={contextValue}>
       {children}
     </SettingsContext.Provider>
   );

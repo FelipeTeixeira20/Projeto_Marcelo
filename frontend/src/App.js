@@ -6,7 +6,7 @@ import {
   useLocation,
   Navigate,
 } from "react-router-dom";
-import { AnimatePresence } from "framer-motion";
+// import { AnimatePresence } from "framer-motion"; // Comentado para teste
 import { SidebarProvider } from "./context/SidebarContext";
 import { SettingsProvider } from "./context/SettingsContext"; // 🔥 Importando o novo contexto
 import Sidebar from "./components/Sidebar";
@@ -16,7 +16,7 @@ import MarketAnalysis from "./pages/MarketAnalysis";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import UserManagement from "./pages/UserManagement";
-import PageTransition from "./components/PageTransition";
+// import PageTransition from "./components/PageTransition"; // Comentado para teste
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 
@@ -38,65 +38,70 @@ function AnimatedRoutes() {
     location.pathname === "/" ||
     location.pathname === "/register";
 
+  // O Sidebar é renderizado fora do AnimatePresence se for persistente
+  // e não fizer parte da animação de entrada/saída da página.
   return (
-    <AnimatePresence mode="wait">
+    <>
       {!isLoginPage && <Sidebar />}
-      <PageTransition key={location.pathname}>
-        <Routes location={location} key={location.pathname}>
-          <Route path="/login" element={<Login />} />
-          <Route path="/" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route
-            path="/dashboard"
-            element={
-              <PrivateRoute>
-                <Dashboard />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/market-analysis"
-            element={
-              <PrivateRoute>
-                <MarketAnalysis />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/favorites"
-            element={
-              <PrivateRoute>
-                <Favorites />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <PrivateRoute>
-                <Profile />
-              </PrivateRoute>
-            }
-          />
-          {/* <Route
-            path="/settings"
-            element={
-              <PrivateRoute>
-                <Settings />
-              </PrivateRoute>
-            }
-          /> */}
-          <Route
-            path="/users"
-            element={
-              <PrivateRoute>
-                <UserManagement />
-              </PrivateRoute>
-            }
-          />
-        </Routes>
-      </PageTransition>
-    </AnimatePresence>
+      {/* <AnimatePresence mode="wait" initial={false}> */}
+      {/* <PageTransition key={location.pathname}> */}
+      <Routes location={location}>
+        {/* Não precisa de key no Routes se PageTransition já tem e location é passada */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route
+          path="/dashboard"
+          element={
+            <PrivateRoute>
+              <Dashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/market-analysis"
+          element={
+            <PrivateRoute>
+              <MarketAnalysis />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/favorites"
+          element={
+            <PrivateRoute>
+              <Favorites />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <PrivateRoute>
+              <Profile />
+            </PrivateRoute>
+          }
+        />
+        {/* <Route
+              path="/settings"
+              element={
+                <PrivateRoute>
+                  <Settings />
+                </PrivateRoute>
+              }
+            /> */}
+        <Route
+          path="/users"
+          element={
+            <PrivateRoute>
+              <UserManagement />
+            </PrivateRoute>
+          }
+        />
+      </Routes>
+      {/* </PageTransition> */}
+      {/* </AnimatePresence> */}
+    </>
   );
 }
 

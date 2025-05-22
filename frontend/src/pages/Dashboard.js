@@ -32,12 +32,20 @@ const Dashboard = () => {
   const [wsStatus, setWsStatus] = useState("⭕ Desconectado");
   const [priceChanges, setPriceChanges] = useState({});
   const [selectedCrypto, setSelectedCrypto] = useState(null);
-  const [selectedExchange, setSelectedExchange] = useState(exchanges[0]); // MEXC como padrão
+  const [selectedExchange, setSelectedExchange] = useState(() => {
+    const binance = exchanges.find((ex) => ex.id === "binance");
+    return binance || exchanges[0]; // Começa com Binance se existir, senão MEXC
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const ws = useRef(null);
   const observer = useRef();
+
+  // Referências para manter os valores mais recentes de selectedExchange e processNewData
+  // nos callbacks do WebSocket sem adicionar aos deps do useEffect principal do WebSocket.
+  const selectedExchangeRef = useRef(selectedExchange);
+  const processNewDataRef = useRef(null); // Inicializar com null
 
   // Função auxiliar para obter o nome do usuário logado
   const getLoggedInUsername = () => {
@@ -146,7 +154,22 @@ const Dashboard = () => {
       console.log(`Dados processados (${processedData.length} itens)`);
 
       // Importante: limpe completamente os dados antigos para evitar mistura
-      setCryptos(processedData);
+      // E garantir unicidade dos dados processados usando o 'id' como chave
+      const uniqueProcessedData = Array.from(
+        new Map(processedData.map((item) => [item.id, item])).values()
+      );
+
+      if (processedData.length !== uniqueProcessedData.length) {
+        console.warn(
+          `[fetchInitialData] Foram removidos ${
+            processedData.length - uniqueProcessedData.length
+          } itens duplicados (baseado no id) da carga inicial para ${
+            selectedExchange.name
+          }.`
+        );
+      }
+
+      setCryptos(uniqueProcessedData);
       setLastUpdate(new Date());
       setLoading(false);
     } catch (error) {
@@ -204,170 +227,191 @@ const Dashboard = () => {
   // 🔥 Função para processar atualizações em tempo real
   const processNewData = useCallback(
     (newData) => {
+      const currentSelectedExchange = selectedExchangeRef.current;
+      console.log(
+        `[WebSocket processNewData] Iniciando para ${
+          currentSelectedExchange.name
+        }. Recebidos ${newData ? newData.length : 0} itens.`
+      );
       if (!newData || !Array.isArray(newData)) {
-        console.warn("Dados inválidos recebidos do WebSocket");
+        console.warn(
+          "[WebSocket processNewData] Dados inválidos ou não é array."
+        );
         return;
       }
 
-      // Registrar a recepção de dados para depuração
-      console.log(
-        `WebSocket: recebidos ${newData.length} itens, filtrando para ${selectedExchange.id}`
-      );
-
-      // Filtrar rigorosamente apenas para o exchange selecionado
       const filteredData = newData.filter(
         (item) =>
           item &&
           item.symbol &&
           item.price &&
-          // Garantir que o item pertence ao exchange atual
-          ((item.exchangeId && item.exchangeId === selectedExchange.id) ||
-            // Ou não tem exchangeId (mas será atribuído abaixo)
-            (!item.exchangeId && selectedExchange.id === "mexc")) // Compatibilidade com dados antigos da MEXC
+          item.exchangeId &&
+          item.exchangeId === currentSelectedExchange.id && // Apenas da corretora selecionada
+          !isNaN(parseFloat(item.price)) &&
+          parseFloat(item.price) > 0
       );
 
       if (filteredData.length === 0) {
-        console.log(
-          `WebSocket: nenhum item válido para ${selectedExchange.id} após filtragem`
-        );
-        return; // Sem dados relevantes para o exchange atual
+        // console.log(
+        //   `[WebSocket processNewData] Nenhum dado relevante para ${currentSelectedExchange.name} após filtro.`
+        // );
+        return;
       }
-
-      console.log(
-        `WebSocket: processando ${filteredData.length} itens para ${selectedExchange.id}`
-      );
-
-      // Para manter controle das mudanças de preço
-      const changes = {};
+      // console.log(
+      //   `[WebSocket processNewData] Para ${
+      //     currentSelectedExchange.name
+      //   }, ${filteredData.length} itens após filtro (exchangeId=${
+      //     currentSelectedExchange.id
+      //   }). Primeiros 5: ${JSON.stringify(filteredData.slice(0, 5))}`
+      // );
 
       setCryptos((prevCryptos) => {
-        // Se não temos dados anteriores, usamos os novos diretamente
-        if (!prevCryptos || prevCryptos.length === 0) {
-          const newData = filteredData.map((crypto) => ({
-            ...crypto,
-            prevPrice: parseFloat(crypto.price),
-            priceChange: 0,
-            exchangeId: selectedExchange.id, // Garantir que tem exchangeId correto
-            exchangeName: selectedExchange.name,
-          }));
+        // 1. Crie um Map dos prevCryptos para fácil acesso e para começar a construir o novo estado.
+        const newCryptosMap = new Map(prevCryptos.map((c) => [c.id, c]));
+        let itemsAddedOrUpdatedCount = 0;
+        let priceChangesToApply = {}; // Coletar mudanças de preço
 
-          console.log(
-            `WebSocket: inicializando ${newData.length} itens para ${selectedExchange.name}`
-          );
-          return newData;
-        }
+        // 2. Processe os dados filtrados do WebSocket.
+        filteredData.forEach((item) => {
+          const id = `${item.symbol}_${item.exchangeId}`;
+          const existingCrypto = newCryptosMap.get(id);
+          const newPriceFloat = parseFloat(item.price);
 
-        // Atualizar apenas as criptos do exchange atual
-        const currentExchangeCryptos = prevCryptos.filter(
-          (c) => c.exchangeId === selectedExchange.id
-        );
-
-        // Atualizar os preços mantendo os metadados
-        const updatedCryptos = currentExchangeCryptos.map((prevCrypto) => {
-          const newCrypto = filteredData.find(
-            (c) => c.symbol === prevCrypto.symbol
-          );
-
-          if (!newCrypto) {
-            return prevCrypto; // Manter o que tínhamos se não houver atualização
+          if (existingCrypto) {
+            const existingPriceFloat = parseFloat(existingCrypto.price);
+            if (existingPriceFloat !== newPriceFloat) {
+              newCryptosMap.set(id, {
+                ...existingCrypto,
+                price: newPriceFloat,
+                prevPrice: existingPriceFloat,
+                priceChange: newPriceFloat > existingPriceFloat ? "up" : "down",
+              });
+              itemsAddedOrUpdatedCount++;
+              priceChangesToApply[id] =
+                newPriceFloat > existingPriceFloat ? "up" : "down";
+            }
+          } else {
+            // Novo item (deve ser raro se a carga inicial é completa para a corretora)
+            newCryptosMap.set(id, {
+              ...item, // spread do item do WebSocket
+              id: id,
+              exchangeId: currentSelectedExchange.id, // Garantir que é da corretora atual
+              exchangeName: currentSelectedExchange.name,
+              exchangeColor: currentSelectedExchange.color,
+              price: newPriceFloat,
+              prevPrice: newPriceFloat,
+              priceChange: null,
+              // Liquidez e outros campos que podem não estar no stream do WebSocket
+              // serão herdados do 'item' se existirem, ou podem precisar ser buscados/mantidos
+              // Se o objeto 'item' do WebSocket não tiver todos os campos de 'existingCrypto',
+              // pode ser necessário um merge mais cuidadoso ou garantir que o backend envie todos os dados.
+              // Por ora, assumimos que 'item' tem o suficiente ou que a ausência é OK.
+              liquidity:
+                item.liquidity !== undefined
+                  ? item.liquidity
+                  : existingCrypto
+                  ? existingCrypto.liquidity
+                  : undefined,
+              volume:
+                item.volume !== undefined
+                  ? item.volume
+                  : existingCrypto
+                  ? existingCrypto.volume
+                  : undefined,
+              // Adicione outros campos aqui se necessário
+            });
+            itemsAddedOrUpdatedCount++;
+            // Para novos itens, não há "mudança" de preço visual imediata,
+            // mas você poderia definir um se quisesse destacá-los.
           }
-
-          const newPrice = parseFloat(newCrypto.price);
-          const prevPrice = parseFloat(prevCrypto.price);
-
-          // Registrar mudança para efeitos visuais se o preço mudou
-          if (newPrice !== prevPrice) {
-            changes[prevCrypto.symbol] = newPrice > prevPrice ? "up" : "down";
-            console.log(
-              `${prevCrypto.symbol}: ${prevPrice} → ${newPrice} (${
-                changes[prevCrypto.symbol]
-              })`
-            );
-          }
-
-          return {
-            ...prevCrypto,
-            ...newCrypto,
-            prevPrice: prevPrice,
-            price: newPrice,
-            exchangeId: selectedExchange.id, // Garantir que mantém exchangeId correto
-            exchangeName: selectedExchange.name,
-            priceChange:
-              newPrice > prevPrice
-                ? "up"
-                : newPrice < prevPrice
-                ? "down"
-                : "same",
-          };
         });
 
-        // Filtrar criptos de outras exchanges que devem ser mantidas
-        const otherExchangeCryptos = prevCryptos.filter(
-          (c) => c.exchangeId !== selectedExchange.id
-        );
-
-        // Encontrar novas criptomoedas que não estavam na lista anterior
-        const existingSymbols = new Set(
-          currentExchangeCryptos.map((c) => c.symbol)
-        );
-        const newCryptos = filteredData
-          .filter((c) => !existingSymbols.has(c.symbol))
-          .map((crypto) => ({
-            ...crypto,
-            prevPrice: parseFloat(crypto.price),
-            priceChange: 0,
-            exchangeId: selectedExchange.id, // Garantir consistência
-            exchangeName: selectedExchange.name,
-          }));
-
-        // Apenas adicionar cryptos da exchange atual
-        const result = [...updatedCryptos, ...newCryptos];
-
-        // Log para verificar se estamos tendo problemas de mixagem
-        if (otherExchangeCryptos.length > 0) {
-          console.warn(
-            `WebSocket: detectadas ${otherExchangeCryptos.length} criptos de outras exchanges que não serão atualizadas`
-          );
+        if (
+          itemsAddedOrUpdatedCount === 0 &&
+          Object.keys(priceChangesToApply).length === 0
+        ) {
+          return prevCryptos; // Nenhum item foi realmente alterado ou adicionado
         }
 
-        return result;
+        // Aplicar os priceChanges coletados de uma vez
+        if (Object.keys(priceChangesToApply).length > 0) {
+          setPriceChanges((prev) => {
+            const updatedChanges = { ...prev, ...priceChangesToApply };
+            // Limpar os highlights após 1 segundo
+            Object.keys(priceChangesToApply).forEach((key) => {
+              setTimeout(() => {
+                setPriceChanges((current) => {
+                  const next = { ...current };
+                  delete next[key];
+                  return next;
+                });
+              }, 1000);
+            });
+            return updatedChanges;
+          });
+        }
+
+        const finalNewCryptos = Array.from(newCryptosMap.values());
+
+        // O log de duplicatas removidas e o "Error Component Stack" associado
+        // não devem mais ocorrer com esta lógica, pois o Map garante unicidade por ID.
+        // Se ainda ocorrer, o problema é mais sutil ou está em outro lugar.
+        // console.log(`[WebSocket processNewData] Estado cryptos atualizado para ${currentSelectedExchange.name}. Total: ${finalNewCryptos.length}`);
+
+        return finalNewCryptos;
       });
-
-      // Atualizar as mudanças visuais se houver mudanças
-      if (Object.keys(changes).length > 0) {
-        console.log(
-          `Atualizando ${
-            Object.keys(changes).length
-          } preços com efeitos visuais`
-        );
-        setPriceChanges(changes);
-        setLastUpdate(new Date());
-
-        // Limpar os efeitos visuais após 1 segundo
-        setTimeout(() => {
-          setPriceChanges({});
-        }, 1000);
-      }
     },
-    [selectedExchange]
+    [selectedExchangeRef, setPriceChanges] // setCryptos é estável, selectedExchangeRef é uma ref
   );
 
-  // 🔥 Conectar ao WebSocket para atualizações em tempo real
-  const connectWebSocket = useCallback(() => {
+  // NOVO useEffect principal para gerenciar o ciclo de vida do WebSocket
+  useEffect(() => {
+    // Atualiza as refs com os valores mais recentes sempre que mudarem
+    selectedExchangeRef.current = selectedExchange;
+    processNewDataRef.current = processNewData;
+  }, [selectedExchange, processNewData]);
+
+  useEffect(() => {
     console.log(
-      `Conectando ao WebSocket para o exchange: ${selectedExchange.name}`
+      `[WebSocket Setup useEffect] Configurando WebSocket. Servidor: ${SERVER_URL}. Seleção inicial para filtro: ${selectedExchangeRef.current.name}`
     );
 
-    // Fechar qualquer conexão existente
-    if (ws.current) {
-      ws.current.close();
-    }
+    // Função para fechar a conexão WebSocket existente de forma segura
+    const closeExistingSocket = () => {
+      if (ws.current) {
+        console.log(
+          `[WebSocket Setup useEffect] Tentando fechar conexão WebSocket existente. Estado: ${ws.current.readyState}`
+        );
+        if (
+          ws.current.readyState === WebSocket.OPEN ||
+          ws.current.readyState === WebSocket.CONNECTING
+        ) {
+          ws.current.close(1000, "Reconfiguring WebSocket");
+          console.log("[WebSocket Setup useEffect] Comando close enviado.");
+        } else {
+          console.log(
+            "[WebSocket Setup useEffect] Conexão existente não estava OPEN ou CONNECTING, não fechando ativamente."
+          );
+        }
+        ws.current = null; // Definir como null após fechar ou se não estava aberta
+      }
+    };
 
-    // Conectar ao servidor WebSocket
+    closeExistingSocket();
+
+    // Introduzir um pequeno atraso para garantir que a porta foi liberada se uma conexão foi fechada
+    // Isso é uma tentativa, pode não ser necessário ou precisar de ajuste.
+    // setTimeout(() => {
+    console.log(
+      "[WebSocket Setup useEffect] Criando nova instância WebSocket..."
+    );
     ws.current = new WebSocket(`ws://${SERVER_URL}:5000/ws`);
+    setWsStatus("🟡 Conectando...");
 
     ws.current.onopen = () => {
-      console.log(`WebSocket conectado para ${selectedExchange.name}`);
+      console.log(
+        `[WebSocket onopen] Conectado. Exchange atualmente relevante para o frontend: ${selectedExchangeRef.current.name}`
+      );
       setError("");
       setWsStatus("🟢 Conectado");
     };
@@ -375,55 +419,62 @@ const Dashboard = () => {
     ws.current.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        if (data && Array.isArray(data)) {
-          console.log(`WebSocket: recebidos ${data.length} itens`);
-          processNewData(data);
-        }
+        // console.log(
+        //   `[WebSocket onmessage] Dados recebidos. Exchange para filtro no frontend: ${selectedExchangeRef.current.name}`
+        // );
+        // Chama a versão mais recente de processNewData usando a ref
+        processNewDataRef.current(data);
       } catch (e) {
-        console.error("Erro ao processar mensagem do WebSocket:", e);
+        console.error("[WebSocket onmessage] Erro ao processar mensagem:", e);
       }
     };
 
-    ws.current.onerror = (error) => {
-      console.error(`Erro de WebSocket para ${selectedExchange.name}:`, error);
-      setError(`Erro na conexão WebSocket. Tente novamente mais tarde.`);
+    ws.current.onerror = (errorEvent) => {
+      console.error(
+        `[WebSocket onerror] Erro na conexão. Exchange relevante no frontend: ${selectedExchangeRef.current.name}`,
+        errorEvent
+      );
+      setError("Erro na conexão WebSocket.");
       setWsStatus("🔴 Erro na conexão");
     };
 
-    ws.current.onclose = () => {
-      console.log(`WebSocket desconectado para ${selectedExchange.name}`);
+    ws.current.onclose = (event) => {
+      console.log(
+        `[WebSocket onclose] Desconectado. Exchange relevante no frontend: ${selectedExchangeRef.current.name}. Code: ${event.code}, Reason: ${event.reason}, WasClean: ${event.wasClean}`
+      );
       setWsStatus("⭕ Desconectado");
+      // Evitar reconexão automática imediata se o fechamento foi intencional (código 1000 ou 1005)
+      // ou se o componente está sendo desmontado (o cleanup fará isso).
+      // Se desejar reconexão automática, adicione uma lógica mais robusta aqui, talvez com backoff.
+      // Por exemplo: if (event.code !== 1000 && event.code !== 1005 && !event.wasClean) { ... }
     };
-  }, [selectedExchange, processNewData]);
 
-  // useEffect para carregar dados iniciais
-  useEffect(() => {
-    console.log(`Carregando dados iniciais para ${selectedExchange.name}`);
-    fetchInitialData();
-  }, [selectedExchange]);
-
-  // useEffect separado para conexão WebSocket
-  useEffect(() => {
-    console.log("Conectando WebSocket para atualizações em tempo real...");
-    connectWebSocket();
-
-    // Limpar a conexão quando o componente for desmontado
+    // Função de limpeza para fechar o WebSocket quando o componente for desmontado ou SERVER_URL mudar
     return () => {
-      console.log("Fechando conexão WebSocket...");
+      console.log("[WebSocket Setup useEffect cleanup] Limpando WebSocket.");
       if (ws.current) {
-        ws.current.close();
+        if (ws.current.readyState === WebSocket.OPEN) {
+          ws.current.close(1000, "Component unmounting or SERVER_URL changed");
+          console.log(
+            "[WebSocket Setup useEffect cleanup] Comando close enviado para WebSocket aberto."
+          );
+        } else {
+          console.log(
+            `[WebSocket Setup useEffect cleanup] WebSocket não estava OPEN (estado: ${ws.current.readyState}). Apenas definindo ws.current como null.`
+          );
+        }
+        ws.current = null;
       }
     };
-  }, [connectWebSocket]);
+  }, [SERVER_URL]); // Dependência principal: recria o WebSocket se SERVER_URL mudar.
 
-  // Forçar binance como seleção inicial e buscar dados ao montar o componente
+  // useEffect para carregar dados iniciais QUANDO selectedExchange MUDA ou NO MOUNT INICIAL
   useEffect(() => {
-    // Começar com a Binance
-    const binanceExchange = exchanges.find((ex) => ex.id === "binance");
-    if (binanceExchange) {
-      setSelectedExchange(binanceExchange);
-    }
-  }, []);
+    console.log(
+      `Carregando dados iniciais para ${selectedExchange.name} (Disparado por selectedExchange ou mount)`
+    );
+    fetchInitialData();
+  }, [selectedExchange]);
 
   // Função para tentar outras corretoras se a atual falhar
   const tryNextExchange = useCallback(async () => {
@@ -603,24 +654,30 @@ const Dashboard = () => {
   }, []);
 
   // 🔄 Filtrando criptomoedas conforme a busca e verificando se pertence à corretora atual
-  const filteredCryptos = cryptos.filter(
-    (crypto) =>
-      // Ignorar objetos de erro
+  const filteredCryptos = cryptos.filter((crypto) => {
+    // Log para cada crypto sendo filtrada
+    // console.log(`[Filtering] Crypto: ${crypto.symbol}, CryptoExchange: ${crypto.exchangeId}, SelectedExchange: ${selectedExchange.id}, Match: ${crypto.exchangeId === selectedExchange.id}`);
+    return (
       !crypto.error &&
-      // Verificar se crypto é um objeto válido
       crypto &&
       typeof crypto === "object" &&
-      // Verificar se é da corretora atual
       crypto.exchangeId === selectedExchange.id &&
-      // Filtro de busca - verificar se symbol existe antes de chamar toLowerCase
       crypto.symbol &&
       crypto.symbol.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    );
+  });
 
   // Log para debug
   useEffect(() => {
-    console.log(`Total de cryptos carregadas: ${cryptos.length}`);
-    console.log(`Total de cryptos filtradas: ${filteredCryptos.length}`);
+    console.log(
+      `[useEffect cryptos-debug] Total de cryptos carregadas no estado 'cryptos': ${cryptos.length}`
+    );
+    console.log(
+      `[useEffect cryptos-debug] SelectedExchange ID no momento do log: ${selectedExchange.id}`
+    );
+    console.log(
+      `[useEffect cryptos-debug] Total de cryptos filtradas (filteredCryptos): ${filteredCryptos.length}`
+    );
 
     // Verificar se há objetos de erro
     const errors = cryptos.filter((c) => c.error);
@@ -844,19 +901,26 @@ const Dashboard = () => {
   // Função para limpar os dados quando mudar a exchange
   const handleExchangeChange = (e) => {
     const exchangeId = e.target.value;
-    const exchange = exchanges.find((ex) => ex.id === exchangeId);
+    const newSelectedExchange = exchanges.find((ex) => ex.id === exchangeId);
 
-    // Limpar dados completamente antes de mudar
-    setCryptos([]);
-    setPriceChanges({});
-    setVisibleCryptos(ITEMS_PER_PAGE);
+    if (newSelectedExchange) {
+      console.log(
+        `[handleExchangeChange] Trocando de ${selectedExchange.name} para ${newSelectedExchange.name}. Limpando dados...`
+      );
+      // Limpar dados completamente antes de mudar
+      setCryptos([]);
+      setPriceChanges({});
+      setVisibleCryptos(ITEMS_PER_PAGE);
+      setError(""); // Limpar erros anteriores
+      setLoading(true); // Indicar carregamento para a nova exchange
 
-    // Atualizar a exchange selecionada (isso disparará o fetchInitialData via useEffect)
-    setSelectedExchange(exchange);
-
-    console.log(
-      `Troca de exchange para ${exchange.name} (${exchange.id}): todos os dados anteriores foram limpos`
-    );
+      // Atualizar a exchange selecionada (isso disparará o fetchInitialData via useEffect)
+      setSelectedExchange(newSelectedExchange);
+    } else {
+      console.error(
+        `[handleExchangeChange] Exchange com id ${exchangeId} não encontrada.`
+      );
+    }
   };
 
   const modalCloseHandler = () => {
@@ -992,9 +1056,7 @@ const Dashboard = () => {
                     ref={
                       index === visibleCryptos - 1 ? lastCryptoElementRef : null
                     }
-                    className={`crypto-card ${
-                      priceChanges[crypto.symbol] || ""
-                    } ${
+                    className={`crypto-card ${priceChanges[crypto.id] || ""} ${
                       favorites.some(
                         (fav) =>
                           fav.symbol === crypto.symbol &&

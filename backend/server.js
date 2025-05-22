@@ -86,7 +86,17 @@ const connectedClients = new Set();
 
 function normalizeSymbol(symbol) {
   if (!symbol) return "";
-  const stablecoins = ["USDT", "USD", "BUSD", "USDC", "DAI", "TUSD", "FDUSD", "USDP", "USDD"];
+  const stablecoins = [
+    "USDT",
+    "USD",
+    "BUSD",
+    "USDC",
+    "DAI",
+    "TUSD",
+    "FDUSD",
+    "USDP",
+    "USDD",
+  ];
   let normalized = symbol.replace(/[-_]/g, "").toUpperCase();
   for (const stablecoin of stablecoins) {
     if (normalized.endsWith(stablecoin)) {
@@ -96,7 +106,6 @@ function normalizeSymbol(symbol) {
   }
   return normalized;
 }
-
 
 // Função para buscar preços de todas as corretoras
 async function fetchPrices() {
@@ -110,29 +119,35 @@ async function fetchPrices() {
       try {
         const [spot, futures] = await Promise.all([
           axios.get(`http://localhost:5000/api/${exch}/spot/prices`),
-          axios.get(`http://localhost:5000/api/${exch}/futures/prices`)
+          axios.get(`http://localhost:5000/api/${exch}/futures/prices`),
         ]);
-        
+
         // Aplique variação nos dados recebidos para simular mudança
-        const applyRandomFluctuation = (arr) => arr.map(item => ({
-          ...item,
-          exchangeId: exch,
-          price: parseFloat(item.price || item.lastPrice || item.last || 0) * (1 + (Math.random() * 0.01 - 0.005)), // ±0.5%
-          liquidity: parseFloat(
-            item.quoteVolume ?? item.amount24 ?? item.volume_24h_quote ?? item.volume ?? 0
-          )
-        }));
+        const applyRandomFluctuation = (arr) =>
+          arr.map((item) => ({
+            ...item,
+            exchangeId: exch,
+            price:
+              parseFloat(item.price || item.lastPrice || item.last || 0) *
+              (1 + (Math.random() * 0.01 - 0.005)), // ±0.5%
+            liquidity: parseFloat(
+              item.quoteVolume ??
+                item.amount24 ??
+                item.volume_24h_quote ??
+                item.volume ??
+                0
+            ),
+          }));
 
         allPrices = [
           ...allPrices,
           ...applyRandomFluctuation(spot.data),
-          ...applyRandomFluctuation(futures.data)
+          ...applyRandomFluctuation(futures.data),
         ];
       } catch (err) {
         console.error(`Erro ao buscar ${exch}:`, err.message);
       }
     }
-
 
     // Lista de corretoras e suas URLs
     const exchanges = [
@@ -161,9 +176,9 @@ async function fetchPrices() {
             ...item,
             exchangeId: exchange.id,
             exchangeName: exchange.name,
-            price: parseFloat(item.price) * (1 + (Math.random() * 0.03 - 0.015)) // ±1.5%
+            price:
+              parseFloat(item.price) * (1 + (Math.random() * 0.03 - 0.015)), // ±1.5%
           }));
-          
 
           console.log(
             `✅ Recebidos ${taggedData.length} itens da ${exchange.name}`
@@ -200,22 +215,26 @@ async function fetchPrices() {
     console.log(`Total de preços coletados: ${allPrices.length}`);
 
     const formatted = allPrices.map((item) => {
-      const exchangeId = item.exchangeId?.toLowerCase() || item.exchange?.toLowerCase() || "";
+      const exchangeIdValue =
+        item.exchangeId?.toLowerCase() || item.exchange?.toLowerCase() || "";
       const symbol = normalizeSymbol(item.symbol);
 
       return {
-        exchange: exchangeId,
+        exchangeId: exchangeIdValue,
         symbol,
         price: parseFloat(item.price || item.lastPrice || item.last || 0),
         liquidity: parseFloat(
-          item.quoteVolume ?? item.amount24 ?? item.volume_24h_quote ?? item.volume ?? 0
-        )
+          item.quoteVolume ??
+            item.amount24 ??
+            item.volume_24h_quote ??
+            item.volume ??
+            0
+        ),
       };
     });
 
-lastPrices = formatted;
-return formatted;
-
+    lastPrices = formatted;
+    return formatted;
   } catch (error) {
     console.error("Erro ao buscar preços das corretoras:", error.message);
     return null;
@@ -225,6 +244,12 @@ return formatted;
 // Função para enviar dados aos clientes
 function broadcastData(data) {
   if (!data) return;
+
+  // Log para ver o que está sendo enviado
+  console.log(
+    `[WebSocket Server broadcastData] Enviando ${data.length} itens. Primeiros 3:`,
+    JSON.stringify(data.slice(0, 3))
+  );
 
   connectedClients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {

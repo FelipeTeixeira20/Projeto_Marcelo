@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+} from "react";
 import Layout from "../components/Layout";
 import { FaStar } from "react-icons/fa";
 import CryptoModal from "../components/CryptoModal";
@@ -26,7 +32,10 @@ const Favorites = () => {
   const [priceUpdates, setPriceUpdates] = useState({});
   const [priceChanges, setPriceChanges] = useState({});
   const ws = useRef(null);
-  const reconnectTimeout = useRef(null);
+  // const reconnectTimeout = useRef(null); // Não será mais usado com a nova abordagem
+
+  // Referência para manter a função processNewData atualizada para o WebSocket
+  const processNewDataRef = useRef(null);
 
   // Novos estados para filtros e ordenação
   const [sortOption, setSortOption] = useState("");
@@ -83,88 +92,222 @@ const Favorites = () => {
     loadFavorites();
   }, []);
 
-  // 🔥 WebSocket para atualizar os preços em tempo real
-  useEffect(() => {
-    const connectWebSocket = () => {
-      if (ws.current) {
-        ws.current.close();
+  // Função para processar novos dados do WebSocket
+  const processNewData = useCallback(
+    (data) => {
+      if (!Array.isArray(data)) {
+        console.warn(
+          "[Favorites WebSocket processNewData] Dados inválidos ou não é array."
+        );
+        return;
       }
 
-      ws.current = new WebSocket(`ws://${SERVER_URL}:5000/ws`);
-
-      ws.current.onopen = () => {
-        console.log("🔗 WebSocket conectado.");
-      };
-
-      ws.current.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (Array.isArray(data)) {
-            // Cria um mapa dos novos preços
-            const newPrices = {};
-            data.forEach((item) => {
-              newPrices[item.symbol] = parseFloat(item.price);
-            });
-
-            // Atualiza os favoritos e detecta mudanças
-            setFavorites((prevFavorites) => {
-              const updatedFavorites = prevFavorites.map((fav) => {
-                const newPrice = newPrices[fav.symbol];
-                if (newPrice !== undefined) {
-                  const oldPrice = fav.current_price;
-                  // Se o preço mudou, atualiza o estado de mudança
-                  if (newPrice !== oldPrice) {
-                    setPriceChanges((prev) => ({
-                      ...prev,
-                      [fav.symbol]: newPrice > oldPrice ? "up" : "down",
-                    }));
-
-                    // Agenda a remoção do efeito
-                    setTimeout(() => {
-                      setPriceChanges((prev) => {
-                        const updated = { ...prev };
-                        delete updated[fav.symbol];
-                        return updated;
-                      });
-                    }, 1000);
-                  }
-
-                  return {
-                    ...fav,
-                    current_price: newPrice,
-                  };
-                }
-                return fav;
-              });
-              return updatedFavorites;
-            });
+      setFavorites((prevFavorites) => {
+        const newPriceDataMap = new Map();
+        data.forEach((item) => {
+          if (item && item.symbol && item.price && item.exchangeId) {
+            const favoriteId = `${item.symbol}_${item.exchangeId}`;
+            newPriceDataMap.set(favoriteId, parseFloat(item.price));
           }
-        } catch (error) {
-          console.error("Erro ao processar dados do WebSocket:", error);
-        }
-      };
+        });
 
-      ws.current.onclose = () => {
-        console.log("⚠️ WebSocket desconectado. Tentando reconectar...");
-        if (!reconnectTimeout.current) {
-          reconnectTimeout.current = setTimeout(connectWebSocket, 3000);
+        if (newPriceDataMap.size === 0) return prevFavorites; // Nenhum dado relevante
+
+        let changesMade = false;
+        const updatedFavorites = prevFavorites.map((fav) => {
+          const favoriteId = fav.id || `${fav.symbol}_${fav.exchangeId}`; // Garante que temos um ID
+          const newPrice = newPriceDataMap.get(favoriteId);
+
+          if (newPrice !== undefined && fav.current_price !== newPrice) {
+            changesMade = true;
+            const oldPrice = fav.current_price;
+
+            setPriceChanges((prev) => ({
+              ...prev,
+              [favoriteId]: newPrice > oldPrice ? "up" : "down",
+            }));
+
+            setTimeout(() => {
+              setPriceChanges((prev) => {
+                const updated = { ...prev };
+                delete updated[favoriteId];
+                return updated;
+              });
+            }, 1000); // Duração do destaque da mudança de preço
+
+            return { ...fav, current_price: newPrice };
+          }
+          return fav;
+        });
+
+        return changesMade ? updatedFavorites : prevFavorites;
+      });
+    },
+    [setFavorites, setPriceChanges]
+  );
+
+  // Efeito para atualizar a referência de processNewData quando ela mudar
+  useEffect(() => {
+    processNewDataRef.current = processNewData;
+  }, [processNewData]); // A dependência é a própria função processNewData
+
+  // 🔥 WebSocket para atualizar os preços em tempo real (Refatorado)
+  useEffect(() => {
+    // A função processNewData é estável devido ao useCallback e sua ref é atualizada em outro useEffect
+    // Portanto, não precisamos incluí-la ou selectedExchangeRef.current nas dependências aqui.
+    console.log(
+      `[Favorites WebSocket Setup useEffect] Configurando WebSocket. Servidor: ${SERVER_URL}`
+    );
+
+    // Função para fechar a conexão WebSocket existente de forma segura
+    const closeExistingSocket = () => {
+      if (ws.current) {
+        console.log(
+          `[Favorites WebSocket Cleanup] Tentando fechar conexão WebSocket existente. Estado: ${ws.current.readyState}`
+        );
+        if (
+          ws.current.readyState === WebSocket.OPEN ||
+          ws.current.readyState === WebSocket.CONNECTING
+        ) {
+          ws.current.close(1000, "Reconfiguring WebSocket for Favorites");
+          console.log("[Favorites WebSocket Cleanup] Comando close enviado.");
+        } else {
+          console.log(
+            "[Favorites WebSocket Cleanup] Conexão existente não estava OPEN ou CONNECTING, não fechando ativamente."
+          );
         }
-      };
+        ws.current = null;
+      }
     };
 
-    connectWebSocket();
+    closeExistingSocket(); // Fechar qualquer socket existente antes de criar um novo
+
+    // Só prosseguir para criar um novo socket se ws.current for de fato null agora
+    // e SERVER_URL for válido.
+    if (!SERVER_URL) {
+      console.warn(
+        "[Favorites WebSocket Setup] SERVER_URL não definido. WebSocket não será conectado."
+      );
+      return;
+    }
+
+    console.log(
+      "[Favorites WebSocket Setup] Criando nova instância WebSocket..."
+    );
+    const socket = new WebSocket(`ws://${SERVER_URL}:5000/ws`);
+    ws.current = socket; // Atribui o novo socket à ref imediatamente
+
+    socket.onopen = () => {
+      if (ws.current !== socket) {
+        console.log(
+          "🔗 [Favorites] WebSocket onopen para socket obsoleto. Ignorando."
+        );
+        socket.close(1000, "Obsolete socket onopen"); // Fechar o socket obsoleto
+        return;
+      }
+      console.log("🔗 [Favorites] WebSocket conectado.");
+    };
+
+    socket.onmessage = (event) => {
+      if (ws.current !== socket) {
+        console.log(
+          "📩 [Favorites] WebSocket onmessage para socket obsoleto. Ignorando."
+        );
+        // Não precisa fechar aqui, pois o onclose do obsoleto deve cuidar disso
+        return;
+      }
+      try {
+        const data = JSON.parse(event.data);
+        if (processNewDataRef.current) {
+          processNewDataRef.current(data);
+        }
+      } catch (error) {
+        console.error(
+          "Erro ao processar dados do WebSocket em Favorites:",
+          error
+        );
+      }
+    };
+
+    socket.onerror = (errorEvent) => {
+      // Se este socket não é mais o atual, logue e possivelmente feche se não estiver já fechado.
+      if (ws.current !== socket) {
+        console.error(
+          `[Favorites WebSocket onerror] Erro em socket obsoleto (estado: ${socket.readyState}):`,
+          errorEvent
+        );
+        if (
+          socket.readyState === WebSocket.OPEN ||
+          socket.readyState === WebSocket.CONNECTING
+        ) {
+          socket.close(1006, "Obsolete socket onerror");
+        }
+        return;
+      }
+      console.error("[Favorites WebSocket onerror] Erro:", errorEvent);
+      // Poderia adicionar lógica para atualizar o status da UI aqui, se necessário
+    };
+
+    socket.onclose = (event) => {
+      // Se este socket não é mais o atual, apenas logue.
+      if (ws.current !== socket && ws.current !== null) {
+        // ws.current !== null verifica se não estamos limpando o socket atual
+        console.log(
+          `⚠️ [Favorites] WebSocket onclose para socket obsoleto (novo ws.current: ${
+            ws.current ? ws.current.url : "null"
+          }). Code: ${event.code}, Reason: ${event.reason}`
+        );
+        return;
+      }
+      // Se ws.current é este socket, OU se ws.current se tornou null porque este é o socket
+      // que está sendo limpo pela função de retorno do useEffect.
+      console.log(
+        `⚠️ [Favorites] WebSocket desconectado. Code: ${event.code}, Reason: ${event.reason}, Clean: ${event.wasClean}`
+      );
+      // Se o socket que está fechando é o socket atual na ref, definimos a ref como null.
+      // Isso é importante para permitir que uma nova conexão seja estabelecida se necessário,
+      // e para que a lógica de "socket obsoleto" funcione corretamente.
+      if (ws.current === socket) {
+        ws.current = null;
+      }
+      // Não tentar reconectar automaticamente aqui. A lógica de remontagem/mudança de SERVER_URL cuidará disso.
+    };
 
     return () => {
-      if (ws.current) {
-        ws.current.close();
-        console.log("🔌 WebSocket fechado ao sair da tela.");
-      }
-      if (reconnectTimeout.current) {
-        clearTimeout(reconnectTimeout.current);
-        reconnectTimeout.current = null;
+      console.log(
+        `[Favorites WebSocket Cleanup Effect] Limpando para socket: ${socket.url}`
+      );
+      if (ws.current === socket) {
+        // Se o socket na ref ainda é este que o cleanup está direcionando
+        console.log(
+          "[Favorites WebSocket Cleanup Effect] ws.current é o socket atual. Fechando e definindo como null."
+        );
+        socket.close(
+          1000,
+          "Componente Favorites desmontado ou SERVER_URL mudou"
+        );
+        ws.current = null;
+      } else if (
+        socket.readyState === WebSocket.OPEN ||
+        socket.readyState === WebSocket.CONNECTING
+      ) {
+        // Se o socket não é o ws.current (ou seja, ws.current mudou para um novo socket),
+        // mas este socket antigo ainda está aberto ou conectando, devemos fechá-lo.
+        console.log(
+          `[Favorites WebSocket Cleanup Effect] Este socket (url: ${
+            socket.url
+          }) não é o ws.current (atual: ${
+            ws.current ? ws.current.url : "null"
+          }), mas ainda está ${socket.readyState}. Fechando.`
+        );
+        socket.close(1000, "Limpando socket antigo no Favorites");
+      } else {
+        console.log(
+          `[Favorites WebSocket Cleanup Effect] Este socket (url: ${socket.url}) não é o ws.current e já está no estado ${socket.readyState}. Nenhuma ação de fechamento explícito.`
+        );
       }
     };
-  }, []);
+  }, [SERVER_URL]); // Dependência principal: recria o WebSocket se SERVER_URL mudar.
 
   const handleUnfavorite = (symbol, exchangeId) => {
     const username = getLoggedInUsername();
@@ -302,7 +445,7 @@ const Favorites = () => {
             {processedFavorites.map((coin) => (
               <div
                 key={coin.id || `${coin.symbol}_${coin.exchangeId}`}
-                className={`favorites-card ${priceChanges[coin.symbol] || ""}`}
+                className={`favorites-card ${priceChanges[coin.id] || ""}`}
                 onClick={() => handleCardClick(coin.symbol)}
               >
                 <button

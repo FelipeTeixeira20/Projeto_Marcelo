@@ -306,73 +306,56 @@ input.search-input {
 
 /* Estilos para preços e indicadores de mudança */
 .price {
-  font-size: 1.2em;
+  font-size: 1.2em; /* Tamanho do preço */
   font-weight: bold;
-  transition: all 0.3s ease;
+  margin: 10px 0;
+  transition: all 0.3s ease; /* Transição suave para mudanças de cor */
 }
 
 /* Animações para mudanças de preço */
 .crypto-card.up {
-  animation: highlightGreen 1s;
-  background-color: rgba(0, 255, 0, 0.3);
-  border-color: #00ff00;
-  box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+  /* animation: highlightGreen 0.5s ease-out; */ /* Animação removida */
+  background-color: rgba(0, 255, 0, 0.1); /* Sutil como em Favoritos */
+  border-color: #00cc00; /* Verde um pouco mais escuro e vibrante para a borda */
 }
 
 .crypto-card.down {
-  animation: highlightRed 1s;
-  background-color: rgba(255, 0, 0, 0.3);
-  border-color: #ff0000;
-  box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+  /* animation: highlightRed 0.5s ease-out; */ /* Animação removida */
+  background-color: rgba(255, 0, 0, 0.1); /* Sutil como em Favoritos */
+  border-color: #cc0000; /* Vermelho um pouco mais escuro e vibrante para a borda */
 }
 
-@keyframes highlightGreen {
-  0% {
-    background-color: rgba(0, 255, 0, 0.8);
-  }
-  100% {
-    background-color: rgba(0, 255, 0, 0.3);
-  }
-}
+/* @keyframes highlightGreen { */
+/* 0% { background-color: rgba(0, 255, 0, 0); border-color: rgba(0,255,0,0.5); } */
+/* 50% { background-color: rgba(0, 255, 0, 0.3); border-color: rgba(0,255,0,1); } */
+/* 100% { background-color: rgba(0, 255, 0, 0); border-color: rgba(0,255,0,0.5); } */
+/* } */
 
-@keyframes highlightRed {
-  0% {
-    background-color: rgba(255, 0, 0, 0.8);
-  }
-  100% {
-    background-color: rgba(255, 0, 0, 0.3);
-  }
-}
+/* @keyframes highlightRed { */
+/* 0% { background-color: rgba(255, 0, 0, 0); border-color: rgba(255,0,0,0.5); } */
+/* 50% { background-color: rgba(255, 0, 0, 0.3); border-color: rgba(255,0,0,1); } */
+/* 100% { background-color: rgba(255, 0, 0, 0); border-color: rgba(255,0,0,0.5); } */
+/* } */
 
 .up .price {
-  color: #00ff00;
-  text-shadow: 0 0 5px rgba(0, 255, 0, 0.7);
-  animation: pulsePriceUp 1s;
+  color: #009900; /* Verde escuro para o texto do preço */
+  /* animation: pulsePriceUp 0.5s ease-out; */ /* Mantido por enquanto, pode ser removido se necessário */
 }
 
 .down .price {
-  color: #ff0000;
-  text-shadow: 0 0 5px rgba(255, 0, 0, 0.7);
-  animation: pulsePriceDown 1s;
+  color: #990000; /* Vermelho escuro para o texto do preço */
+  /* animation: pulsePriceDown 0.5s ease-out; */ /* Mantido por enquanto, pode ser removido se necessário */
 }
 
-@keyframes pulsePriceUp {
-  0% {
-    transform: scale(1.2);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
+/* @keyframes pulsePriceUp { */
+/* 0% { transform: scale(1.2); } */
+/* 100% { transform: scale(1); } */
+/* } */
 
-@keyframes pulsePriceDown {
-  0% {
-    transform: scale(1.2);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
+/* @keyframes pulsePriceDown { */
+/* 0% { transform: scale(1.2); } */
+/* 100% { transform: scale(1); } */
+/* } */
 
 .exchange-selector {
   margin-bottom: 20px;
