@@ -95,6 +95,10 @@ const MarketAnalysis = () => {
   // Função para processar dados do WebSocket de forma otimizada
   const processWebSocketUpdate = useCallback(
     (data) => {
+      console.log(
+        "[MarketAnalysis processWebSocketUpdate] Função chamada com dados:",
+        data && data.length > 0 ? data.slice(0, 2) : data
+      ); // Log no início da função
       const now = Date.now();
       const updates = new Map();
 
@@ -158,19 +162,6 @@ const MarketAnalysis = () => {
           if (pricesChanged || liquidityChanged) {
             lastUpdateTime.current.set(opp.id, now);
             hasChangedOverall = true;
-
-            setRecentlyUpdatedIds((prevRecentIds) => {
-              const newSet = new Set(prevRecentIds);
-              newSet.add(opp.id);
-              setTimeout(() => {
-                setRecentlyUpdatedIds((currentRecentIds) => {
-                  const temp = new Set(currentRecentIds);
-                  temp.delete(opp.id);
-                  return temp;
-                });
-              }, 1000); // Remove o destaque após 1s
-              return newSet;
-            });
 
             return {
               ...opp,
@@ -513,7 +504,12 @@ const MarketAnalysis = () => {
         setWsConnected(true);
       };
 
-      socketInstance.onmessage = debounce((event) => {
+      socketInstance.onmessage = (event) => {
+        // Removido debounce temporariamente para log imediato
+        console.log(
+          "[Market WebSocket onmessage - RAW] Mensagem bruta recebida:",
+          event.data ? event.data.substring(0, 100) + "..." : "sem dados"
+        );
         if (ws.current !== socketInstance) {
           console.log(
             "[Market WebSocket onmessage] Evento de socket obsoleto ignorado."
@@ -521,10 +517,15 @@ const MarketAnalysis = () => {
           return;
         }
         try {
-          const data = JSON.parse(event.data);
-          // console.log("📡 Dados recebidos via WebSocket (Market):", data.length > 3 ? data.slice(0, 3) : data);
+          const parsedData = JSON.parse(event.data);
+          console.log(
+            "[Market WebSocket onmessage - Parsed] Dados parseados:",
+            parsedData && parsedData.length > 0
+              ? parsedData.slice(0, 2)
+              : parsedData
+          );
           if (processWebSocketUpdateRef.current) {
-            processWebSocketUpdateRef.current(data);
+            processWebSocketUpdateRef.current(parsedData);
           }
         } catch (error) {
           console.error(
@@ -532,7 +533,7 @@ const MarketAnalysis = () => {
             error
           );
         }
-      }, 100); // Debounce continua útil
+      };
 
       socketInstance.onclose = () => {
         if (ws.current !== socketInstance) {
@@ -688,9 +689,9 @@ const MarketAnalysis = () => {
                   })
                   .map((opp) => (
                     <motion.div
-                      key={`${opp.id}-${opp.price1}-${opp.price2}`}
+                      key={opp.id}
                       className={`opportunity-card ${
-                        recentlyUpdatedIds.has(opp.id) ? "highlight-update" : ""
+                        false ? "highlight-update" : ""
                       }`}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
