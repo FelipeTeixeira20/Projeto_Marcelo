@@ -123,34 +123,28 @@ async function fetchPrices() {
         ]);
 
         // Aplique variação nos dados recebidos para simular mudança
-        const applyRandomFluctuation = (arr) =>
-          arr.map((item) => ({
-            ...item,
-            exchangeId: exch,
-            price:
-              parseFloat(item.price || item.lastPrice || item.last || 0) *
-              (1 + (Math.random() * 0.01 - 0.005)), // ±0.5%
-            liquidity: parseFloat(
-              item.quoteVolume ??
-                item.amount24 ??
-                item.volume_24h_quote ??
-                item.volume ??
-                0
-            ),
-          }));
+        const applyRandomFluctuation = (arr, type) => arr.map(item => ({
+          ...item,
+          exchangeId: exch,
+          type, // ← ADICIONE ESTA LINHA
+          price: parseFloat(item.price || item.lastPrice || item.last || 0) * (1 + (Math.random() * 0.01 - 0.005)),
+          liquidity: parseFloat(
+            item.quoteVolume ?? item.amount24 ?? item.volume_24h_quote ?? item.volume ?? 0
+          )
+        }));
 
         allPrices = [
           ...allPrices,
-          ...applyRandomFluctuation(spot.data),
-          ...applyRandomFluctuation(futures.data),
+          ...applyRandomFluctuation(spot.data, "spot"),
+          ...applyRandomFluctuation(futures.data, "futures")
         ];
       } catch (err) {
         console.error(`Erro ao buscar ${exch}:`, err.message);
       }
     }
 
-    // Lista de corretoras e suas URLs
-    const exchanges = [
+    // Buscar dados externos (spot apenas) da Binance e MEXC
+    const externalExchanges = [
       {
         id: "mexc",
         name: "MEXC",
@@ -161,23 +155,21 @@ async function fetchPrices() {
         name: "Binance",
         url: "https://api.binance.com/api/v3/ticker/price",
       },
-      // As outras corretoras serão buscadas via nossa própria API para não complicar muito
     ];
 
-    // Buscar dados de cada corretora externa diretamente
-    for (const exchange of exchanges) {
+    for (const exchange of externalExchanges) {
       try {
         console.log(`Buscando dados da ${exchange.name}...`);
         const response = await axios.get(exchange.url, { timeout: 5000 });
 
         if (response.data && Array.isArray(response.data)) {
-          // Adicionar tags de exchange a cada item
           const taggedData = response.data.map((item) => ({
-            ...item,
+            symbol: item.symbol,
             exchangeId: exchange.id,
             exchangeName: exchange.name,
-            price:
-              parseFloat(item.price) * (1 + (Math.random() * 0.03 - 0.015)), // ±1.5%
+            type: "spot",
+            price: parseFloat(item.price || 0),
+            liquidity: 0, // esses endpoints externos não trazem volume
           }));
 
           console.log(
@@ -192,6 +184,7 @@ async function fetchPrices() {
         );
       }
     }
+
 
     // Buscar dados das outras corretoras através da nossa própria API
     // (isso é uma simplificação - em um ambiente de produção real,
@@ -215,23 +208,21 @@ async function fetchPrices() {
     console.log(`Total de preços coletados: ${allPrices.length}`);
 
     const formatted = allPrices.map((item) => {
-      const exchangeIdValue =
-        item.exchangeId?.toLowerCase() || item.exchange?.toLowerCase() || "";
+      const exchangeId = item.exchangeId?.toLowerCase() || item.exchange?.toLowerCase() || "";
       const symbol = normalizeSymbol(item.symbol);
+      const type = item.type || "spot"; // padrão para backward compatibility
 
       return {
-        exchangeId: exchangeIdValue,
+        exchangeId,
         symbol,
+        type, // novo campo incluído
         price: parseFloat(item.price || item.lastPrice || item.last || 0),
         liquidity: parseFloat(
-          item.quoteVolume ??
-            item.amount24 ??
-            item.volume_24h_quote ??
-            item.volume ??
-            0
-        ),
+          item.quoteVolume ?? item.amount24 ?? item.volume_24h_quote ?? item.volume ?? 0
+        )
       };
     });
+
 
     lastPrices = formatted;
     return formatted;

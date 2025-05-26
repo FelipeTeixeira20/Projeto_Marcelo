@@ -117,7 +117,7 @@ const MarketAnalysis = () => {
         );
 
         const symbolKey = normalizeSymbol(update.symbol);
-        const key = `${exchangeKey}-${symbolKey}`;
+        const key = `${exchangeKey}-${symbolKey}-${update.type ?? "spot"}`;
 
         updates.set(key, {
           price: parseFloat(update.price),
@@ -129,12 +129,19 @@ const MarketAnalysis = () => {
       setOpportunities((prevOpps) => {
         let hasChangedOverall = false;
         const updatedOpps = prevOpps.map((opp) => {
-          const key1 = `${opp.exchange1.toLowerCase()}-${normalizeSymbol(
-            opp.symbol
-          )}`;
-          const key2 = `${opp.exchange2.toLowerCase()}-${normalizeSymbol(
-            opp.symbol
-          )}`;
+          const baseKey = (exchange, symbol, type) =>
+            `${exchange.toLowerCase()}-${normalizeSymbol(symbol)}-${type}`;
+
+          let key1, key2;
+
+          if (opp.type === "spot-futures" && opp.exchange1 === opp.exchange2) {
+            key1 = baseKey(opp.exchange1, opp.symbol, "spot");
+            key2 = baseKey(opp.exchange2, opp.symbol, "futures");
+          } else {
+            key1 = baseKey(opp.exchange1, opp.symbol, "spot");
+            key2 = baseKey(opp.exchange2, opp.symbol, "spot");
+          }
+
           const update1 = updates.get(key1);
           const update2 = updates.get(key2);
 
