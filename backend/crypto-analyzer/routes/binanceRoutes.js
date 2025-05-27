@@ -17,12 +17,24 @@ router.get("/", (req, res) => {
 router.get("/spot/prices", async (req, res) => {
   try {
     const response = await axios.get(`${BINANCE_API_URL}/ticker/price`);
-    res.json(response.data);
+
+    // Filtrar apenas os pares contra USDT
+    const filtered = response.data
+      .filter(item => item.symbol.endsWith("USDT"))
+      .map(item => ({
+        symbol: item.symbol,
+        price: parseFloat(item.price),
+        exchangeId: "binance",
+        type: "spot"
+      }));
+
+    res.json(filtered);
   } catch (error) {
     console.error("❌ Erro ao buscar preços Spot da Binance:", error.message);
     res.status(500).json({ error: "Erro ao obter preços Spot da Binance" });
   }
 });
+
 
 // 🔹 Taxas
 router.get("/fees", (req, res) => {

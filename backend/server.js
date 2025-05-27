@@ -127,7 +127,7 @@ async function fetchPrices() {
           ...item,
           exchangeId: exch,
           type, // ← ADICIONE ESTA LINHA
-          price: parseFloat(item.price || item.lastPrice || item.last || 0) * (1 + (Math.random() * 0.01 - 0.005)),
+          price: parseFloat(item.price || item.lastPrice || item.last || 0),
           liquidity: parseFloat(
             item.quoteVolume ?? item.amount24 ?? item.volume_24h_quote ?? item.volume ?? 0
           )
@@ -190,15 +190,25 @@ async function fetchPrices() {
     // (isso é uma simplificação - em um ambiente de produção real,
     // você precisaria buscar diretamente das APIs das corretoras)
     try {
-      const internalResponse = await axios.get(
-        "http://localhost:5000/api/binance/spot/prices"
-      );
-      if (internalResponse.data && Array.isArray(internalResponse.data)) {
-        allPrices = [...allPrices, ...internalResponse.data];
-      }
-    } catch (internalError) {
-      console.error("Erro ao buscar dados internos:", internalError.message);
+    const internalResponse = await axios.get(
+      "http://localhost:5000/api/binance/spot/prices"
+    );
+    if (internalResponse.data && Array.isArray(internalResponse.data)) {
+      const enriched = internalResponse.data.map((item) => ({
+        ...item,
+        exchangeId: "binance",
+        type: "spot",
+        price: parseFloat(item.price || 0),
+        liquidity: parseFloat(
+          item.quoteVolume ?? item.amount24 ?? item.volume_24h_quote ?? item.volume ?? 0
+        ),
+      }));
+      allPrices = [...allPrices, ...enriched];
     }
+  } catch (internalError) {
+    console.error("Erro ao buscar dados internos:", internalError.message);
+  }
+
 
     // Se não conseguimos dados de nenhuma corretora, retornar null
     if (allPrices.length === 0) {
