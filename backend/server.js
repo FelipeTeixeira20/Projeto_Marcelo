@@ -123,10 +123,10 @@ async function fetchPrices() {
         ]);
 
         // Aplique variação nos dados recebidos para simular mudança
-        const applyRandomFluctuation = (arr, type) => arr.map(item => ({
+        const applyRealDataFormatting = (arr, type) => arr.map(item => ({
           ...item,
           exchangeId: exch,
-          type, // ← ADICIONE ESTA LINHA
+          type,
           price: parseFloat(item.price || item.lastPrice || item.last || 0),
           liquidity: parseFloat(
             item.quoteVolume ?? item.amount24 ?? item.volume_24h_quote ?? item.volume ?? 0

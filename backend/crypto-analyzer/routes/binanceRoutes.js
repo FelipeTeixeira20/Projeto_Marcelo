@@ -75,7 +75,7 @@ router.get("/futures/prices", async (req, res) => {
       const bookData = books.find((b) => b.symbol === price.symbol) || {};
       return {
         symbol: price.symbol,
-        price: price.price,
+        price: price.price,               // preço atual real
         volume: bookData.volume || "0",
         quoteVolume: bookData.quoteVolume || "0",
         openPrice: bookData.openPrice || "0",
@@ -87,7 +87,6 @@ router.get("/futures/prices", async (req, res) => {
         exchangeName: "Binance",
       };
     });
-
     res.json(enrichedData);
   } catch (error) {
     console.error(
