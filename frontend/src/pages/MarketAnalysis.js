@@ -136,7 +136,7 @@ const MarketAnalysis = () => {
 
           if (opp.type === "spot-futures" && opp.exchange1 === opp.exchange2) {
             key1 = baseKey(opp.exchange1, opp.symbol, "spot");
-            key2 = baseKey(opp.exchange2, opp.symbol, "futures");
+            key2 = baseKey(opp.exchange2, cleanFuturesSymbol(opp.exchange2, opp.symbol), "futures");
           } else {
             key1 = baseKey(opp.exchange1, opp.symbol, "spot");
             key2 = baseKey(opp.exchange2, opp.symbol, "spot");

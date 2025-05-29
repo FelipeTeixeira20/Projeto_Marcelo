@@ -135,8 +135,8 @@ async function fetchPrices() {
 
         allPrices = [
           ...allPrices,
-          ...applyRandomFluctuation(spot.data, "spot"),
-          ...applyRandomFluctuation(futures.data, "futures")
+          ...applyRealDataFormatting(spot.data, "spot"),
+          ...applyRealDataFormatting(futures.data, "futures")
         ];
       } catch (err) {
         console.error(`Erro ao buscar ${exch}:`, err.message);
