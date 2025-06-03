@@ -116,7 +116,13 @@ const MarketAnalysis = () => {
           update.exchangeId || update.exchangeName || update.exchange || ""
         );
 
-        const symbolKey = normalizeSymbol(update.symbol);
+        const rawSymbol = update.symbol;
+        const cleanSymbol =
+          update.type === "futures"
+            ? cleanFuturesSymbol(exchangeKey, rawSymbol)
+            : rawSymbol;
+
+        const symbolKey = normalizeSymbol(cleanSymbol);
         const key = `${exchangeKey}-${symbolKey}-${update.type ?? "spot"}`;
 
         updates.set(key, {
