@@ -217,21 +217,39 @@ async function fetchPrices() {
 
     console.log(`Total de preços coletados: ${allPrices.length}`);
 
+    const cleanFuturesSymbol = (exchange, symbol) => {
+      if (!symbol) return symbol;
+      if (exchange === "bitget" || exchange === "gateio") {
+        return symbol.replace(/_UMCBL$/, "").replace(/_DMCBL$/, "").replace(/_CMCBL$/, "");
+      }
+      if (exchange === "kucoin") {
+        return symbol.endsWith("M") ? symbol.slice(0, -1) : symbol;
+      }
+      return symbol;
+    };
+
     const formatted = allPrices.map((item) => {
       const exchangeId = item.exchangeId?.toLowerCase() || item.exchange?.toLowerCase() || "";
-      const symbol = normalizeSymbol(item.symbol);
-      const type = item.type || "spot"; // padrão para backward compatibility
+      const type = item.type || "spot";
+
+      let symbol = item.symbol;
+      if (type === "futures") {
+        symbol = cleanFuturesSymbol(exchangeId, symbol);
+      }
+
+      symbol = normalizeSymbol(symbol);
 
       return {
         exchangeId,
         symbol,
-        type, // novo campo incluído
+        type,
         price: parseFloat(item.price || item.lastPrice || item.last || 0),
         liquidity: parseFloat(
           item.quoteVolume ?? item.amount24 ?? item.volume_24h_quote ?? item.volume ?? 0
         )
       };
     });
+
 
 
     lastPrices = formatted;
