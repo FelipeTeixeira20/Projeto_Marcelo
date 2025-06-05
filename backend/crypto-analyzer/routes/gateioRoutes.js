@@ -65,8 +65,31 @@ router.get("/spot/prices", async (req, res) => {
 // 🔹 Preços Futures
 router.get("/futures/prices", async (req, res) => {
   try {
-    const response = await axios.get(`${GATEIO_FUTURES_API_URL}/tickers`);
-    res.json(response.data);
+    const response = await axios.get(`${GATEIO_FUTURES_API_URL}/tickers`, {
+      timeout: 10000,
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (response.data && Array.isArray(response.data)) {
+      // Normalizar os dados para o formato padrão esperado pelo frontend
+      const formattedData = response.data.map((item) => ({
+        symbol: item.contract, // nome do contrato future
+        price: item.last || "0",
+        lastPrice: item.last || "0", // <-- Adicione esta linha!
+        quoteVolume: item.volume_24h_quote || "0", // volume em USD
+        volume: item.volume_24h || "0", // volume em moeda base
+        exchangeId: "gateio",
+        exchangeName: "Gate.io Futures",
+        type: "futures",
+      }));
+
+      res.json(formattedData);
+    } else {
+      res.status(500).json({ error: "Dados inválidos recebidos da API Futures Gate.io" });
+    }
   } catch (error) {
     console.error(
       "❌ Erro ao buscar preços Futures da Gate.io:",

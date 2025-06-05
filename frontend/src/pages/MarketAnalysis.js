@@ -244,15 +244,15 @@ const MarketAnalysis = () => {
   ]);
 
   const getFuturesSymbol = (exchange, item) => {
-    if (exchange === "gateio") return item.contract;
+    if (exchange === "gateio") return item.symbol; // <-- Corrigido!
     if (exchange === "kucoin") return item.symbol;
     return item.symbol;
   };
 
   const getFuturesPrice = (exchange, item) => {
-    if (exchange === "gateio") return item.last;
+    if (exchange === "gateio") return item.lastPrice; // <-- Corrija aqui!
     if (exchange === "kucoin") return item.price;
-    return item.last ?? item.lastPrice; // <- aqui!! se não for gateio nem kucoin, usa a lógica que você falou
+    return item.last ?? item.lastPrice ?? item.price;
   };
 
   // Função para buscar dados iniciais de forma otimizada
@@ -270,6 +270,9 @@ const MarketAnalysis = () => {
               `http://${SERVER_URL}:5000/api/${exchange}/futures/prices`
             ),
           ]);
+
+          console.log("Gateio spot:", spotResponse.data);
+          console.log("Gateio futures:", futuresResponse.data);
 
           return {
             exchange,
@@ -305,15 +308,40 @@ const MarketAnalysis = () => {
             data1.spot?.forEach((spotItem1) => {
               const normalizedSymbolSpot = normalizeSymbol(spotItem1.symbol);
 
-              data1.futures?.forEach((futuresItem1) => {
+              // Verifique se há dados de futures
+              if (!Array.isArray(data1.futures) || data1.futures.length === 0) {
+                console.log(`[DEBUG] Gateio: Nenhum future encontrado para ${exchange1}`);
+                return;
+              }
+
+              data1.futures.forEach((futuresItem1) => {
+                // Evite processar se futuresItem1 não existir ou não tiver símbolo
+                if (!futuresItem1 || !getFuturesSymbol(exchange1, futuresItem1)) {
+                  console.log("[DEBUG] Gateio: futuresItem1 inválido", futuresItem1);
+                  return;
+                }
+
                 const normalizedFuturesSymbol = normalizeSymbol(
                   cleanFuturesSymbol(
                     exchange1,
                     getFuturesSymbol(exchange1, futuresItem1)
                   )
                 );
+
+                // LOG DE COMPARAÇÃO
+                console.log("[DEBUG] Comparando:", {
+                  spotSymbol: spotItem1.symbol,
+                  futuresSymbol: getFuturesSymbol(exchange1, futuresItem1),
+                  normalizedSymbolSpot,
+                  normalizedFuturesSymbol,
+                  spotPrice: spotItem1.price,
+                  futuresPrice: getFuturesPrice(exchange1, futuresItem1),
+                  typeSpot: spotItem1.type,
+                  typeFutures: futuresItem1.type,
+                });
+
                 if (normalizedFuturesSymbol === normalizedSymbolSpot) {
-                  console.log("MATCH encontrado!", {
+                  console.log("[DEBUG] MATCH encontrado!", {
                     corretora: exchange1,
                     symbolSpot: spotItem1.symbol,
                     priceSpot: spotItem1.price,
@@ -350,6 +378,14 @@ const MarketAnalysis = () => {
                       processedPairs.add(id);
                     }
                   }
+                } else {
+                  console.log("NO MATCH", {
+                    corretora: exchange1,
+                    normalizedSymbolSpot,
+                    normalizedFuturesSymbol,
+                    spotSymbol: spotItem1.symbol,
+                    futuresSymbol: getFuturesSymbol(exchange1, futuresItem1),
+                  });
                 }
               });
             });
