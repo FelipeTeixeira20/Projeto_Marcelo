@@ -5,6 +5,10 @@ const router = express.Router();
 const MEXC_API_URL = "https://api.mexc.com/api/v3";
 const MEXC_FUTURES_API_URL = "https://contract.mexc.com/api/v1";
 
+
+const mexcAPIKey = process.env.MEXC_API_KEY;
+const mexcSecretKey = process.env.MEXC_SECRET_KEY;
+
 // 🔹 Teste da API MEXC
 router.get('/', (req, res) => {
     res.json({ message: "API da MEXC funcionando! Use /spot/prices ou /futures/prices." });

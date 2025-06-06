@@ -6,6 +6,10 @@ const router = express.Router();
 const BINANCE_API_URL = "https://api.binance.com/api/v3";
 const BINANCE_FUTURES_API_URL = "https://fapi.binance.com/fapi/v1";
 
+// 🔹 Recuperando a chave da API e Secret da Binance
+const binanceAPIKey = process.env.BINANCE_API_KEY;
+const binanceSecretKey = process.env.BINANCE_SECRET_KEY;
+
 // 🔹 Teste da API Binance
 router.get("/", (req, res) => {
   res.json({
@@ -16,7 +20,11 @@ router.get("/", (req, res) => {
 // 🔹 Preços Spot
 router.get("/spot/prices", async (req, res) => {
   try {
-    const response = await axios.get(`${BINANCE_API_URL}/ticker/price`);
+    const response = await axios.get(`${BINANCE_API_URL}/ticker/price`, {
+      headers: {
+        'X-MBX-APIKEY': binanceAPIKey, // Incluindo a chave da API
+      },
+    });
 
     // Filtrar apenas os pares contra USDT
     const filtered = response.data
@@ -34,7 +42,6 @@ router.get("/spot/prices", async (req, res) => {
     res.status(500).json({ error: "Erro ao obter preços Spot da Binance" });
   }
 });
-
 
 // 🔹 Taxas
 router.get("/fees", (req, res) => {
@@ -64,8 +71,16 @@ router.get("/fees/:type", (req, res) => {
 router.get("/futures/prices", async (req, res) => {
   try {
     const [priceResponse, bookResponse] = await Promise.all([
-      axios.get(`${BINANCE_FUTURES_API_URL}/ticker/price`),
-      axios.get(`${BINANCE_FUTURES_API_URL}/ticker/24hr`),
+      axios.get(`${BINANCE_FUTURES_API_URL}/ticker/price`, {
+        headers: {
+          'X-MBX-APIKEY': binanceAPIKey, // Incluindo a chave da API
+        },
+      }),
+      axios.get(`${BINANCE_FUTURES_API_URL}/ticker/24hr`, {
+        headers: {
+          'X-MBX-APIKEY': binanceAPIKey, // Incluindo a chave da API
+        },
+      }),
     ]);
 
     const prices = priceResponse.data;
@@ -104,6 +119,9 @@ router.get("/ticker/:symbol", async (req, res) => {
     console.log("🔍 Buscando dados para:", symbol);
     const response = await axios.get(`${BINANCE_API_URL}/ticker/24hr`, {
       params: { symbol },
+      headers: {
+        'X-MBX-APIKEY': binanceAPIKey, // Incluindo a chave da API
+      },
     });
     res.json(response.data);
   } catch (error) {

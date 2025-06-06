@@ -5,6 +5,10 @@ const router = express.Router();
 const GATEIO_API_URL = "https://api.gateio.ws/api/v4/spot";
 const GATEIO_FUTURES_API_URL = "https://api.gateio.ws/api/v4/futures/usdt";
 
+// 🔹 Recuperando as chaves de API da Gate.io
+const gateioAPIKey = process.env.GATEIO_API_KEY;
+const gateioSecretKey = process.env.GATEIO_SECRET_KEY;
+
 // 🔹 Teste da API Gate.io
 router.get("/", (req, res) => {
   res.json({
@@ -21,6 +25,7 @@ router.get("/spot/prices", async (req, res) => {
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${gateioAPIKey}`, // Adicionando a chave de API aqui
       },
     });
     console.log("✅ Resposta recebida do Gate.io:", response.status);
@@ -70,6 +75,7 @@ router.get("/futures/prices", async (req, res) => {
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${gateioAPIKey}`, // Adicionando a chave de API aqui
       },
     });
 
@@ -113,6 +119,7 @@ router.get("/ticker/:symbol", async (req, res) => {
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${gateioAPIKey}`, // Adicionando a chave de API aqui
       },
     });
 
@@ -141,6 +148,7 @@ router.get("/ticker/:symbol", async (req, res) => {
             headers: {
               Accept: "application/json",
               "Content-Type": "application/json",
+              "Authorization": `Bearer ${gateioAPIKey}`, // Adicionando a chave de API aqui
             },
           }
         );
