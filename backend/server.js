@@ -11,6 +11,7 @@ require("dotenv").config();
 
 // Configuração do Express
 const app = express();
+const BASE_URL = process.env.RENDER_EXTERNAL_URL || "http://localhost:5000";
 app.use(
   cors({
     origin: "*",
@@ -118,25 +119,30 @@ async function fetchPrices() {
     for (const exch of internalExchanges) {
       try {
         const [spot, futures] = await Promise.all([
-          axios.get(`http://localhost:5000/api/${exch}/spot/prices`),
-          axios.get(`http://localhost:5000/api/${exch}/futures/prices`),
+          axios.get(`${BASE_URL}/api/${exch}/spot/prices`),
+          axios.get(`${BASE_URL}/api/${exch}/futures/prices`),
         ]);
 
         // Aplique variação nos dados recebidos para simular mudança
-        const applyRealDataFormatting = (arr, type) => arr.map(item => ({
-          ...item,
-          exchangeId: exch,
-          type,
-          price: parseFloat(item.price || item.lastPrice || item.last || 0),
-          liquidity: parseFloat(
-            item.quoteVolume ?? item.amount24 ?? item.volume_24h_quote ?? item.volume ?? 0
-          )
-        }));
+        const applyRealDataFormatting = (arr, type) =>
+          arr.map((item) => ({
+            ...item,
+            exchangeId: exch,
+            type,
+            price: parseFloat(item.price || item.lastPrice || item.last || 0),
+            liquidity: parseFloat(
+              item.quoteVolume ??
+                item.amount24 ??
+                item.volume_24h_quote ??
+                item.volume ??
+                0
+            ),
+          }));
 
         allPrices = [
           ...allPrices,
           ...applyRealDataFormatting(spot.data, "spot"),
-          ...applyRealDataFormatting(futures.data, "futures")
+          ...applyRealDataFormatting(futures.data, "futures"),
         ];
       } catch (err) {
         console.error(`Erro ao buscar ${exch}:`, err.message);
@@ -185,30 +191,32 @@ async function fetchPrices() {
       }
     }
 
-
     // Buscar dados das outras corretoras através da nossa própria API
     // (isso é uma simplificação - em um ambiente de produção real,
     // você precisaria buscar diretamente das APIs das corretoras)
     try {
-    const internalResponse = await axios.get(
-      "http://localhost:5000/api/binance/spot/prices"
-    );
-    if (internalResponse.data && Array.isArray(internalResponse.data)) {
-      const enriched = internalResponse.data.map((item) => ({
-        ...item,
-        exchangeId: "binance",
-        type: "spot",
-        price: parseFloat(item.price || 0),
-        liquidity: parseFloat(
-          item.quoteVolume ?? item.amount24 ?? item.volume_24h_quote ?? item.volume ?? 0
-        ),
-      }));
-      allPrices = [...allPrices, ...enriched];
+      const internalResponse = await axios.get(
+        `${BASE_URL}/api/binance/spot/prices`
+      );
+      if (internalResponse.data && Array.isArray(internalResponse.data)) {
+        const enriched = internalResponse.data.map((item) => ({
+          ...item,
+          exchangeId: "binance",
+          type: "spot",
+          price: parseFloat(item.price || 0),
+          liquidity: parseFloat(
+            item.quoteVolume ??
+              item.amount24 ??
+              item.volume_24h_quote ??
+              item.volume ??
+              0
+          ),
+        }));
+        allPrices = [...allPrices, ...enriched];
+      }
+    } catch (internalError) {
+      console.error("Erro ao buscar dados internos:", internalError.message);
     }
-  } catch (internalError) {
-    console.error("Erro ao buscar dados internos:", internalError.message);
-  }
-
 
     // Se não conseguimos dados de nenhuma corretora, retornar null
     if (allPrices.length === 0) {
@@ -220,7 +228,10 @@ async function fetchPrices() {
     const cleanFuturesSymbol = (exchange, symbol) => {
       if (!symbol) return symbol;
       if (exchange === "bitget" || exchange === "gateio") {
-        return symbol.replace(/_UMCBL$/, "").replace(/_DMCBL$/, "").replace(/_CMCBL$/, "");
+        return symbol
+          .replace(/_UMCBL$/, "")
+          .replace(/_DMCBL$/, "")
+          .replace(/_CMCBL$/, "");
       }
       if (exchange === "kucoin") {
         return symbol.endsWith("M") ? symbol.slice(0, -1) : symbol;
@@ -229,7 +240,8 @@ async function fetchPrices() {
     };
 
     const formatted = allPrices.map((item) => {
-      const exchangeId = item.exchangeId?.toLowerCase() || item.exchange?.toLowerCase() || "";
+      const exchangeId =
+        item.exchangeId?.toLowerCase() || item.exchange?.toLowerCase() || "";
       const type = item.type || "spot";
 
       let symbol = item.symbol;
@@ -245,12 +257,14 @@ async function fetchPrices() {
         type,
         price: parseFloat(item.price || item.lastPrice || item.last || 0),
         liquidity: parseFloat(
-          item.quoteVolume ?? item.amount24 ?? item.volume_24h_quote ?? item.volume ?? 0
-        )
+          item.quoteVolume ??
+            item.amount24 ??
+            item.volume_24h_quote ??
+            item.volume ??
+            0
+        ),
       };
     });
-
-
 
     lastPrices = formatted;
     return formatted;
