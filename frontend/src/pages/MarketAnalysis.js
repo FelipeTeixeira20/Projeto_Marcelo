@@ -12,10 +12,7 @@ import "./MarketAnalysis.css";
 import { debounce } from "lodash";
 import { motion, AnimatePresence } from "framer-motion";
 
-const SERVER_URL =
-  window.location.hostname === "192.168.100.26"
-    ? "192.168.100.26"
-    : window.location.hostname;
+const SERVER_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 const EXCHANGES = ["binance", "mexc", "bitget", "gateio", "kucoin"];
 const BATCH_SIZE = 50; // Número de oportunidades mostradas por vez
@@ -265,9 +262,9 @@ const MarketAnalysis = () => {
       const fetchPromises = selectedExchanges.map(async (exchange) => {
         try {
           const [spotResponse, futuresResponse] = await Promise.all([
-            axios.get(`http://${SERVER_URL}:5000/api/${exchange}/spot/prices`),
+            axios.get(`http://${SERVER_URL}/api/${exchange}/spot/prices`),
             axios.get(
-              `http://${SERVER_URL}:5000/api/${exchange}/futures/prices`
+              `http://${SERVER_URL}/api/${exchange}/futures/prices`
             ),
           ]);
 
@@ -518,7 +515,7 @@ const MarketAnalysis = () => {
       `[Market WebSocket Setup useEffect] Configurando WebSocket. Servidor: ${SERVER_URL}`
     );
 
-    const wsUrl = `ws://${SERVER_URL}:5000/ws`;
+    const wsUrl = `wss://${SERVER_URL}/ws`; // use `wss://` se seu backend tiver HTTPS
     let currentWs = null; // Variável local para o socket da instância atual do useEffect
 
     const connect = () => {
