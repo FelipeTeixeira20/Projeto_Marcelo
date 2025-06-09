@@ -45,6 +45,8 @@ const Login = () => {
         }
       );
 
+      console.log("RESPOSTA DO BACKEND:", response.data);
+
       const { token } = response.data;
 
       if (formData.rememberMe) {
