@@ -27,7 +27,6 @@ const cleanFuturesSymbol = (exchange, symbol) => {
       .replace(/_DMCBL$/, "")
       .replace(/_CMCBL$/, "");
   }
-  console.log('teste');
 
   if (exchange === "kucoin") {
     return symbol.endsWith("M") ? symbol.slice(0, -1) : symbol;
