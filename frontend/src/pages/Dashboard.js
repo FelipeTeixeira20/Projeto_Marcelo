@@ -61,7 +61,7 @@ const Dashboard = () => {
 
       // Busca dados da exchange selecionada
       const response = await axios.get(
-        `//${SERVER_URL}/api/${selectedExchange.id}/spot/prices`
+        `${SERVER_URL}/api/${selectedExchange.id}/spot/prices`
       );
 
       console.log(
@@ -492,7 +492,7 @@ const Dashboard = () => {
 
         // Verificar se a API da corretora está respondendo
         const testResponse = await axios.get(
-          `//${SERVER_URL}/api/${exchangeId}/spot/prices`,
+          `${SERVER_URL}/api/${exchangeId}/spot/prices`,
           { timeout: 5000 } // Timeout de 5 segundos
         );
 
@@ -751,7 +751,7 @@ const Dashboard = () => {
       });
 
       const response = await axios.get(
-        `//${SERVER_URL}/api/${
+        `${SERVER_URL}/api/${
           selectedExchange.id
         }/ticker/${encodeURIComponent(symbol)}`
       );

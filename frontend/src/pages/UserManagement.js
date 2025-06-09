@@ -29,7 +29,7 @@ const UserManagement = () => {
     try {
       const token =
         localStorage.getItem("token") || sessionStorage.getItem("token");
-      const response = await axios.get(`//${SERVER_URL}/api/users`, {
+      const response = await axios.get(`${SERVER_URL}/api/users`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUsers(response.data);
@@ -49,7 +49,7 @@ const UserManagement = () => {
     try {
       const token =
         localStorage.getItem("token") || sessionStorage.getItem("token");
-      await axios.post(`//${SERVER_URL}/api/users`, newUser, {
+      await axios.post(`${SERVER_URL}/api/users`, newUser, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setNewUser({
@@ -101,7 +101,7 @@ const UserManagement = () => {
       }
 
       await axios.put(
-        `//${SERVER_URL}/api/users/${editingUser._id}`,
+        `${SERVER_URL}/api/users/${editingUser._id}`,
         updateData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -119,7 +119,7 @@ const UserManagement = () => {
     try {
       const token =
         localStorage.getItem("token") || sessionStorage.getItem("token");
-      await axios.delete(`//${SERVER_URL}/api/users/${userId}`, {
+      await axios.delete(`${SERVER_URL}/api/users/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchUsers();

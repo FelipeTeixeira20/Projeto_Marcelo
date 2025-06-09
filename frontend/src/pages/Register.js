@@ -79,7 +79,7 @@ const Register = () => {
         payload.customGender = formData.customGender;
       }
 
-      await axios.post(`//${SERVER_URL}/api/auth/register`, payload);
+      await axios.post(`${SERVER_URL}/api/auth/register`, payload);
 
       setSuccess(
         "Usuário registrado com sucesso! Você será redirecionado para o login."

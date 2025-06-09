@@ -347,7 +347,7 @@ const Favorites = () => {
       });
 
       const response = await axios.get(
-        `//${SERVER_URL}/api/${exchangeToFetch}/ticker/${encodeURIComponent(
+        `${SERVER_URL}/api/${exchangeToFetch}/ticker/${encodeURIComponent(
           symbol
         )}`
       );

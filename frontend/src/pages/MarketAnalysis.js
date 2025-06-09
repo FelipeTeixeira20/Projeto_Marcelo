@@ -262,9 +262,9 @@ const MarketAnalysis = () => {
       const fetchPromises = selectedExchanges.map(async (exchange) => {
         try {
           const [spotResponse, futuresResponse] = await Promise.all([
-            axios.get(`//${SERVER_URL}/api/${exchange}/spot/prices`),
+            axios.get(`${SERVER_URL}/api/${exchange}/spot/prices`),
             axios.get(
-              `//${SERVER_URL}/api/${exchange}/futures/prices`
+              `${SERVER_URL}/api/${exchange}/futures/prices`
             ),
           ]);
 
