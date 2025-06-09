@@ -8,7 +8,7 @@ import React, {
 import Layout from "../components/Layout";
 import CryptoBackground from "../components/CryptoBackground";
 import axios from "axios";
-import "./MarketAnalysis.css"
+import "./MarketAnalysis.css";
 import { debounce } from "lodash";
 import { motion, AnimatePresence } from "framer-motion";
 
