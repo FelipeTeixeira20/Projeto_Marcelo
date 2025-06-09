@@ -12,7 +12,7 @@ import "./MarketAnalysis.css";
 import { debounce } from "lodash";
 import { motion, AnimatePresence } from "framer-motion";
 
-const SERVER_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const SERVER_URL = process.env.REACT_APP_API_URL;
 
 const EXCHANGES = ["binance", "mexc", "bitget", "gateio", "kucoin"];
 const BATCH_SIZE = 50; // Número de oportunidades mostradas por vez

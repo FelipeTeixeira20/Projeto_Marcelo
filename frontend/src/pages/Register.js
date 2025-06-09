@@ -5,7 +5,7 @@ import Header from "../components/Header";
 import CryptoBackground from "../components/CryptoBackground"; // Assuming you want the same background
 import "./Register.css"; // We will create this CSS file next
 
-const SERVER_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const SERVER_URL = process.env.REACT_APP_API_URL;
 
 const Register = () => {
   const navigate = useNavigate();

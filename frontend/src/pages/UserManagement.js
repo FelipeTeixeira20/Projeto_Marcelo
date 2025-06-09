@@ -5,7 +5,7 @@ import Layout from "../components/Layout";
 import "./UserManagement.css";
 import CryptoBackground from "../components/CryptoBackground";
 
-const SERVER_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const SERVER_URL = process.env.REACT_APP_API_URL;
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);

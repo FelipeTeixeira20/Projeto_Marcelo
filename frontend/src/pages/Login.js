@@ -5,7 +5,7 @@ import Header from "../components/Header";
 import "./Login.css";
 import logo from "../assets/logo_arby.png"; // 👈 Logo adicionada
 
-const SERVER_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const SERVER_URL = process.env.REACT_APP_API_URL;
 
 const Login = () => {
   const navigate = useNavigate();

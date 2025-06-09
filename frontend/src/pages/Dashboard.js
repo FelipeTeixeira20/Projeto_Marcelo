@@ -6,7 +6,7 @@ import { FaStar } from "react-icons/fa";
 import "./Dashboard.css";
 import CryptoModal from "../components/CryptoModal"; // Adicione este import
 
-const SERVER_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const SERVER_URL = process.env.REACT_APP_API_URL;
 
 const ITEMS_PER_PAGE = 20; // 🔥 Número de cards carregados por vez
 
