@@ -5,10 +5,7 @@ import Header from "../components/Header";
 import CryptoBackground from "../components/CryptoBackground"; // Assuming you want the same background
 import "./Register.css"; // We will create this CSS file next
 
-const SERVER_URL =
-  window.location.hostname === "192.168.100.26"
-    ? "192.168.100.26"
-    : window.location.hostname;
+const SERVER_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -82,7 +79,7 @@ const Register = () => {
         payload.customGender = formData.customGender;
       }
 
-      await axios.post(`http://${SERVER_URL}:5000/api/auth/register`, payload);
+      await axios.post(`//${SERVER_URL}/api/auth/register`, payload);
 
       setSuccess(
         "Usuário registrado com sucesso! Você será redirecionado para o login."

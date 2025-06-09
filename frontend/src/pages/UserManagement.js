@@ -5,10 +5,7 @@ import Layout from "../components/Layout";
 import "./UserManagement.css";
 import CryptoBackground from "../components/CryptoBackground";
 
-const SERVER_URL =
-  window.location.hostname === "192.168.100.26"
-    ? "192.168.100.26"
-    : window.location.hostname;
+const SERVER_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -32,7 +29,7 @@ const UserManagement = () => {
     try {
       const token =
         localStorage.getItem("token") || sessionStorage.getItem("token");
-      const response = await axios.get(`http://${SERVER_URL}:5000/api/users`, {
+      const response = await axios.get(`//${SERVER_URL}/api/users`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUsers(response.data);
@@ -52,7 +49,7 @@ const UserManagement = () => {
     try {
       const token =
         localStorage.getItem("token") || sessionStorage.getItem("token");
-      await axios.post(`http://${SERVER_URL}:5000/api/users`, newUser, {
+      await axios.post(`//${SERVER_URL}/api/users`, newUser, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setNewUser({
@@ -104,7 +101,7 @@ const UserManagement = () => {
       }
 
       await axios.put(
-        `http://${SERVER_URL}:5000/api/users/${editingUser._id}`,
+        `//${SERVER_URL}/api/users/${editingUser._id}`,
         updateData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -122,7 +119,7 @@ const UserManagement = () => {
     try {
       const token =
         localStorage.getItem("token") || sessionStorage.getItem("token");
-      await axios.delete(`http://${SERVER_URL}:5000/api/users/${userId}`, {
+      await axios.delete(`//${SERVER_URL}/api/users/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchUsers();

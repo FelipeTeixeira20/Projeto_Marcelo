@@ -12,10 +12,7 @@ import CryptoBackground from "../components/CryptoBackground";
 import axios from "axios";
 import "./Favorites.css";
 
-const SERVER_URL =
-  window.location.hostname === "192.168.100.26"
-    ? "192.168.100.26"
-    : window.location.hostname;
+const SERVER_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 // 🔥 Lista de exchanges disponíveis (copiada do Dashboard.js)
 const exchanges = [
@@ -350,7 +347,7 @@ const Favorites = () => {
       });
 
       const response = await axios.get(
-        `http://${SERVER_URL}:5000/api/${exchangeToFetch}/ticker/${encodeURIComponent(
+        `//${SERVER_URL}/api/${exchangeToFetch}/ticker/${encodeURIComponent(
           symbol
         )}`
       );

@@ -11,7 +11,7 @@ require("dotenv").config();
 
 // Configuração do Express
 const app = express();
-const BASE_URL = process.env.RENDER_EXTERNAL_URL || "http://localhost:5000";
+const SERVER_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 app.use(
   cors({
     origin: "*",

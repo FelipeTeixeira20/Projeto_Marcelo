@@ -6,10 +6,7 @@ import { FaStar } from "react-icons/fa";
 import "./Dashboard.css";
 import CryptoModal from "../components/CryptoModal"; // Adicione este import
 
-const SERVER_URL =
-  window.location.hostname === "192.168.100.26"
-    ? "192.168.100.26"
-    : window.location.hostname;
+const SERVER_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 const ITEMS_PER_PAGE = 20; // 🔥 Número de cards carregados por vez
 
@@ -64,7 +61,7 @@ const Dashboard = () => {
 
       // Busca dados da exchange selecionada
       const response = await axios.get(
-        `http://${SERVER_URL}:5000/api/${selectedExchange.id}/spot/prices`
+        `//${SERVER_URL}/api/${selectedExchange.id}/spot/prices`
       );
 
       console.log(
@@ -495,7 +492,7 @@ const Dashboard = () => {
 
         // Verificar se a API da corretora está respondendo
         const testResponse = await axios.get(
-          `http://${SERVER_URL}:5000/api/${exchangeId}/spot/prices`,
+          `//${SERVER_URL}/api/${exchangeId}/spot/prices`,
           { timeout: 5000 } // Timeout de 5 segundos
         );
 
@@ -754,7 +751,7 @@ const Dashboard = () => {
       });
 
       const response = await axios.get(
-        `http://${SERVER_URL}:5000/api/${
+        `//${SERVER_URL}/api/${
           selectedExchange.id
         }/ticker/${encodeURIComponent(symbol)}`
       );

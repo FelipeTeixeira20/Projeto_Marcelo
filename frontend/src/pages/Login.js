@@ -5,10 +5,7 @@ import Header from "../components/Header";
 import "./Login.css";
 import logo from "../assets/logo_arby.png"; // 👈 Logo adicionada
 
-const SERVER_URL =
-  window.location.hostname === "192.168.100.26"
-    ? "192.168.100.26"
-    : window.location.hostname;
+const SERVER_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -41,7 +38,7 @@ const Login = () => {
 
     try {
       const response = await axios.post(
-        `http://${SERVER_URL}:5000/api/auth/login`,
+        `//${SERVER_URL}/api/auth/login`,
         {
           username: formData.username,
           password: formData.password,
