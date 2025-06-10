@@ -11,7 +11,7 @@ require("dotenv").config();
 
 // Configuração do Express
 const app = express();
-const SERVER_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const SERVER_URL = process.env.SERVER_URL || "http://localhost:5000";
 app.use(
   cors({
     origin: "*",
@@ -119,8 +119,8 @@ async function fetchPrices() {
     for (const exch of internalExchanges) {
       try {
         const [spot, futures] = await Promise.all([
-          axios.get(`${BASE_URL}/api/${exch}/spot/prices`),
-          axios.get(`${BASE_URL}/api/${exch}/futures/prices`),
+          axios.get(`${SERVER_URL}/api/${exch}/spot/prices`),
+          axios.get(`${SERVER_URL}/api/${exch}/futures/prices`),
         ]);
 
         // Aplique variação nos dados recebidos para simular mudança
@@ -196,7 +196,7 @@ async function fetchPrices() {
     // você precisaria buscar diretamente das APIs das corretoras)
     try {
       const internalResponse = await axios.get(
-        `${BASE_URL}/api/binance/spot/prices`
+        `${SERVER_URL}/api/binance/spot/prices`
       );
       if (internalResponse.data && Array.isArray(internalResponse.data)) {
         const enriched = internalResponse.data.map((item) => ({
