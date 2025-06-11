@@ -70,6 +70,12 @@ app.get("/setup-admin", async (req, res) => {
       username: "felipe.teixeira",
       password: "123456",
       isAdmin: true,
+      email: "admin@example.com",
+      fullName: "Felipe Teixeira",
+      birthDate: "1990-01-01",
+      country: "Brasil",
+      city: "São Paulo",
+      gender: "Masculino"
     });
     await admin.save();
     res.json({
