@@ -6,9 +6,6 @@ const exchangeFees = require("../config/exchangeFees");
 const router = express.Router();
 const BINANCE_API_URL = "https://api.binance.com/api/v3";
 const BINANCE_FUTURES_API_URL = "https://fapi.binance.com/fapi/v1";
-const SCRAPER_API_KEY = process.env.SCRAPER_API_KEY;
-
-const proxiedURL = (targetUrl) => `http://api.scraperapi.com?api_key=${SCRAPER_API_KEY}&url=${encodeURIComponent(targetUrl)}`;
 
 router.get("/", (req, res) => {
   res.json({
@@ -19,7 +16,7 @@ router.get("/", (req, res) => {
 // Preços Spot
 router.get("/spot/prices", async (req, res) => {
   try {
-    const response = await axios.get(proxiedURL(`${BINANCE_API_URL}/ticker/price`));
+    const response = await axios.get(`${BINANCE_API_URL}/ticker/price`);
 
     const filtered = response.data
       .filter(item => item.symbol.endsWith("USDT"))
@@ -41,8 +38,8 @@ router.get("/spot/prices", async (req, res) => {
 router.get("/futures/prices", async (req, res) => {
   try {
     const [priceResponse, bookResponse] = await Promise.all([
-      axios.get(proxiedURL(`${BINANCE_FUTURES_API_URL}/ticker/price`)),
-      axios.get(proxiedURL(`${BINANCE_FUTURES_API_URL}/ticker/24hr`))
+      axios.get(`${BINANCE_FUTURES_API_URL}/ticker/price`),
+      axios.get(`${BINANCE_FUTURES_API_URL}/ticker/24hr`)
     ]);
 
     const prices = priceResponse.data;
@@ -99,7 +96,7 @@ router.get("/fees/:type", (req, res) => {
 router.get("/ticker/:symbol", async (req, res) => {
   try {
     const { symbol } = req.params;
-    const response = await axios.get(proxiedURL(`${BINANCE_API_URL}/ticker/24hr?symbol=${symbol}`));
+    const response = await axios.get(`${BINANCE_API_URL}/ticker/24hr?symbol=${symbol}`);
     res.json(response.data);
   } catch (error) {
     console.error("❌ Erro ao buscar dados do ticker:", error.message);
@@ -110,7 +107,7 @@ router.get("/ticker/:symbol", async (req, res) => {
 // Endpoint de debug
 router.get("/debug/binance", async (req, res) => {
   try {
-    const r = await axios.get(proxiedURL(`${BINANCE_API_URL}/ticker/price`));
+    const r = await axios.get(`${BINANCE_API_URL}/ticker/price`);
     res.status(200).json({ status: "ok", count: r.data.length });
   } catch (err) {
     console.error("Erro de rede Binance:", err.message);

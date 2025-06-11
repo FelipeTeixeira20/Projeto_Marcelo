@@ -14,7 +14,7 @@ const app = express();
 const SERVER_URL = process.env.SERVER_URL || "http://localhost:5000";
 app.use(
   cors({
-    origin: "https://projeto-marcelo.vercel.app/",
+    origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true
