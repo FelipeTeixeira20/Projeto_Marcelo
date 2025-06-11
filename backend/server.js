@@ -16,10 +16,11 @@ app.use(
   cors({
     origin: "https://projeto-marcelo.vercel.app/",
     methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true
   })
 );
-app.use(express.json());
+app.use(cors(corsOptions));
 
 // Conexão com MongoDB Atlas
 mongoose
