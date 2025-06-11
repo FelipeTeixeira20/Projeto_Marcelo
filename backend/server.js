@@ -12,14 +12,26 @@ require("dotenv").config();
 // Configuração do Express
 const app = express();
 const SERVER_URL = process.env.SERVER_URL
+const allowedOrigins = [
+  "https://projeto-marcelo.vercel.app",
+  
+];
+
 app.use(
   cors({
-    origin: "*",
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true
+    credentials: true,
   })
 );
+
 
 // Conexão com MongoDB Atlas
 mongoose
