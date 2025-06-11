@@ -14,7 +14,7 @@ const app = express();
 const SERVER_URL = process.env.SERVER_URL || "http://localhost:5000";
 app.use(
   cors({
-    origin: "*",
+    origin: "https://arby-zeta.vercel.app",
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
