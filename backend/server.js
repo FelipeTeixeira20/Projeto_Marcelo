@@ -20,7 +20,6 @@ app.use(
     credentials: true
   })
 );
-app.use(cors(corsOptions));
 
 // Conexão com MongoDB Atlas
 mongoose
