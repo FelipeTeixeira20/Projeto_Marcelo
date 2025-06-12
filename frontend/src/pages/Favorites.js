@@ -191,7 +191,7 @@ const Favorites = () => {
     console.log(
       "[Favorites WebSocket Setup] Criando nova instância WebSocket..."
     );
-    const socket = new WebSocket(`ws://${SERVER_URL}:5000/ws`);
+    const socket = new WebSocket(`wss://${SERVER_URL}/ws`);
     ws.current = socket; // Atribui o novo socket à ref imediatamente
 
     socket.onopen = () => {

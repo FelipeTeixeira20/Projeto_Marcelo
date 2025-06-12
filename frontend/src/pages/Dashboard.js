@@ -402,7 +402,7 @@ const Dashboard = () => {
     console.log(
       "[WebSocket Setup useEffect] Criando nova instância WebSocket..."
     );
-    ws.current = new WebSocket(`ws://${SERVER_URL}:5000/ws`);
+    ws.current = new WebSocket(`wss://${SERVER_URL}/ws`);
     setWsStatus("🟡 Conectando...");
 
     ws.current.onopen = () => {
