@@ -14,8 +14,7 @@ const Profile = () => {
       try {
         const token =
           localStorage.getItem("token") || sessionStorage.getItem("token");
-        const response = await axios.get(
-          `//${window.location.hostname}/api/users/me`,
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/users/me`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
