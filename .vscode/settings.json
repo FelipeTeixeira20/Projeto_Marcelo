@@ -1,0 +1,8 @@
+{
+    "appService.zipIgnorePattern": [
+        "node_modules{,/**}",
+        ".vscode{,/**}"
+    ],
+    "appService.defaultWebAppToDeploy": "/subscriptions/283bce3c-cc4b-4c14-96fe-a97b12d9f334/resourceGroups/cripto-rg/providers/Microsoft.Web/sites/api-cripto-marcelo",
+    "appService.deploySubpath": "backend"
+}

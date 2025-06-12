@@ -515,7 +515,8 @@ const MarketAnalysis = () => {
       `[Market WebSocket Setup useEffect] Configurando WebSocket. Servidor: ${SERVER_URL}`
     );
 
-    const wsUrl = `wss://${SERVER_URL}/ws`; // use `wss://` se seu backend tiver HTTPS
+    const wsHost = new URL(SERVER_URL).host;
+    const wsUrl = `wss://${wsHost}/ws`;; // use `wss://` se seu backend tiver HTTPS
     let currentWs = null; // Variável local para o socket da instância atual do useEffect
 
     const connect = () => {

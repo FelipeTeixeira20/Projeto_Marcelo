@@ -11,6 +11,7 @@ require("dotenv").config();
 
 // Configuração do Express
 const app = express();
+app.use(express.json());
 const SERVER_URL = process.env.SERVER_URL
 const allowedOrigins = [
   "https://projeto-marcelo.vercel.app",
@@ -31,6 +32,7 @@ app.use(
     credentials: true,
   })
 );
+
 
 
 // Conexão com MongoDB Atlas
@@ -61,31 +63,6 @@ app.use("/api/bitget", bitgetRoutes);
 app.use("/api/gateio", gateioRoutes);
 app.use("/api/kucoin", kucoinRoutes);
 app.use("/api/mexc", mexcRoutes);
-
-// Rota temporária para criar usuário admin (REMOVER DEPOIS)
-app.get("/setup-admin", async (req, res) => {
-  try {
-    const User = require("./models/User");
-    const admin = new User({
-      username: "felipe.teixeira",
-      password: "123456",
-      isAdmin: true,
-      email: "admin@example.com",
-      fullName: "Felipe Teixeira",
-      birthDate: "1990-01-01",
-      country: "Brasil",
-      city: "São Paulo",
-      gender: "Masculino"
-    });
-    await admin.save();
-    res.json({
-      message: "Administrador criado com sucesso",
-      admin: admin.username,
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
 
 // Criação do servidor HTTP
 const server = http.createServer(app);

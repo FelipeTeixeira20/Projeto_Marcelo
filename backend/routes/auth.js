@@ -54,6 +54,7 @@ router.post("/register", async (req, res) => {
 
 // Rota de login
 router.post("/login", async (req, res) => {
+  console.log("LOGIN BODY:", req.body);
   try {
     const { username, password } = req.body;
 
