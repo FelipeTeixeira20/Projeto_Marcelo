@@ -43,8 +43,11 @@ const Sidebar = () => {
       try {
         const token =
           localStorage.getItem("token") || sessionStorage.getItem("token");
+        const baseURL =
+          process.env.REACT_APP_API_URL ||
+          `${window.location.protocol}//${window.location.hostname}`;
         const response = await axios.get(
-          `http://${window.location.hostname}:5000/api/users/me`,
+            `${baseURL}/api/users/me`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
