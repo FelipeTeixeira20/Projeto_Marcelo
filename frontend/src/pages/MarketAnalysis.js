@@ -49,6 +49,7 @@ const MarketAnalysis = () => {
   const lastUpdateTime = useRef(new Map());
   const [minProfit, setMinProfit] = useState("");
   const [maxProfit, setMaxProfit] = useState("");
+  const [showProfitFilter, setShowProfitFilter] = useState(false);
 
   // Função para normalizar símbolos (memoizada)
   const normalizeSymbol = useMemo(() => {
@@ -235,7 +236,7 @@ const MarketAnalysis = () => {
           (!minProfit || opp.profit >= parseFloat(minProfit)) &&
           (!maxProfit || opp.profit <= parseFloat(maxProfit));
 
-        return matchesSearch && matchesExchanges;
+        return matchesSearch && matchesExchanges && profitWithinRange;
       })
       .slice(0, visibleCount);
   }, [
@@ -244,6 +245,8 @@ const MarketAnalysis = () => {
     selectedExchanges,
     visibleCount,
     normalizeSymbol,
+    minProfit,
+    maxProfit,
   ]);
 
   const getFuturesSymbol = (exchange, item) => {
@@ -716,23 +719,41 @@ const MarketAnalysis = () => {
                 {exchange.charAt(0).toUpperCase() + exchange.slice(1)}
               </button>
             ))}
-          </div>
-          <div className="profit-range-filter">
-            <label>Lucro (%)</label>
-            <input
-              type="number"
-              step="0.01"
-              placeholder="Mín."
-              value={minProfit}
-              onChange={(e) => setMinProfit(e.target.value)}
-            />
-            <input
-              type="number"
-              step="0.01"
-              placeholder="Máx."
-              value={maxProfit}
-              onChange={(e) => setMaxProfit(e.target.value)}
-            />
+            <div className="profit-dropdown-container">
+              <button
+                className="profit-dropdown-toggle"
+                onClick={() => setShowProfitFilter((prev) => !prev)}
+              >
+                Lucro ⌄
+              </button>
+
+              {showProfitFilter && (
+                <div className="profit-dropdown-menu">
+                  <label>Lucro mínimo (%)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={minProfit}
+                    onChange={(e) => setMinProfit(e.target.value)}
+                    placeholder="Ex: 0.5"
+                  />
+                  <label>Lucro máximo (%)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={maxProfit}
+                    onChange={(e) => setMaxProfit(e.target.value)}
+                    placeholder="Ex: 5"
+                  />
+                  <button
+                    className="apply-button"
+                    onClick={() => setShowProfitFilter(false)}
+                  >
+                    Aplicar
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
