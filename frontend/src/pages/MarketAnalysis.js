@@ -247,6 +247,7 @@ const MarketAnalysis = () => {
     normalizeSymbol,
     minProfit,
     maxProfit,
+    
   ]);
 
   const getFuturesSymbol = (exchange, item) => {
