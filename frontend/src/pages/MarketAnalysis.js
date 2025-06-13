@@ -399,41 +399,6 @@ const MarketAnalysis = () => {
           }
           // Compara entre diferentes exchanges
           else {
-            // Spot vs Spot entre exchanges
-            data1.spot?.forEach((spotItem1) => {
-              const normalizedSymbolSpot = normalizeSymbol(spotItem1.symbol);
-
-              data2.spot?.forEach((spotItem2) => {
-                if (
-                  normalizeSymbol(spotItem2.symbol) === normalizedSymbolSpot
-                ) {
-                  const profit = calculateProfit(
-                    parseFloat(spotItem1.price),
-                    parseFloat(spotItem2.price)
-                  );
-
-                  if (profit >= MIN_PROFIT) {
-                    const id = `${exchange1}-${exchange2}-${normalizedSymbolSpot}-ss`;
-                    if (!processedPairs.has(id)) {
-                      opportunities.push({
-                        id,
-                        symbol: normalizedSymbolSpot,
-                        exchange1,
-                        exchange2,
-                        type: "spot-spot",
-                        price1: parseFloat(spotItem1.price),
-                        price2: parseFloat(spotItem2.price),
-                        profit,
-                        timestamp: Date.now(),
-                        liquidity1: getLiquidityValue(exchange1, spotItem1),
-                        liquidity2: getLiquidityValue(exchange2, spotItem2),
-                      });
-                      processedPairs.add(id);
-                    }
-                  }
-                }
-              });
-
               // Spot vs Futures entre exchanges
               data2.futures?.forEach((futuresItem2) => {
                 const normalizedFuturesSymbol2 = normalizeSymbol(
@@ -475,9 +440,9 @@ const MarketAnalysis = () => {
                   }
                 }
               });
-            });
+            };
           }
-        });
+        );
       });
 
       setOpportunities(opportunities.sort((a, b) => b.profit - a.profit));
