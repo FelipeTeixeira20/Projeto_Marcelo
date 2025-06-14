@@ -399,7 +399,9 @@ const MarketAnalysis = () => {
           }
           // Compara entre diferentes exchanges
           else {
-              // Spot vs Futures entre exchanges
+            data1.spot?.forEach((spotItem1) => {
+              const normalizedSymbolSpot = normalizeSymbol(spotItem1.symbol);
+          
               data2.futures?.forEach((futuresItem2) => {
                 const normalizedFuturesSymbol2 = normalizeSymbol(
                   cleanFuturesSymbol(
@@ -407,18 +409,17 @@ const MarketAnalysis = () => {
                     getFuturesSymbol(exchange2, futuresItem2)
                   )
                 );
+          
                 if (normalizedFuturesSymbol2 === normalizedSymbolSpot) {
                   const spotPrice = parseFloat(spotItem1.price);
                   const futuresPrice = parseFloat(
                     getFuturesPrice(exchange2, futuresItem2)
                   );
-
-                  if (isNaN(spotPrice) || isNaN(futuresPrice)) {
-                    return; // pula se algum preço estiver inválido
-                  }
-
+          
+                  if (isNaN(spotPrice) || isNaN(futuresPrice)) return;
+          
                   const profit = calculateProfit(spotPrice, futuresPrice);
-
+          
                   if (profit >= MIN_PROFIT) {
                     const id = `${exchange1}-${exchange2}-${normalizedSymbolSpot}-sf`;
                     if (!processedPairs.has(id)) {
@@ -440,9 +441,9 @@ const MarketAnalysis = () => {
                   }
                 }
               });
-            };
+            });
           }
-        );
+        });
       });
 
       setOpportunities(opportunities.sort((a, b) => b.profit - a.profit));
